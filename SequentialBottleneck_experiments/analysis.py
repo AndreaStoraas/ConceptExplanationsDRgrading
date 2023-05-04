@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error, precision_recall_fscore_support, accuracy_score, precision_score, recall_score, balanced_accuracy_score, classification_report
 
-
+##############
+# This code is from the original concept bottleneck model implementation!
+# https://github.com/yewsiang/ConceptBottleneck/tree/master/CUB
+################
 # ---------------------- OAI ----------------------
 def plot(x, y, **kw):
     if kw.get('multiple_plots'):

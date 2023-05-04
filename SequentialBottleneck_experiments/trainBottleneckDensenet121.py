@@ -29,7 +29,6 @@ from analysis import binary_accuracy, AverageMeter
 #Code for training the model on all 6 concepts using FGADR!
 
 #Device:
-# Should us ID = 0 (Vajira will use ID = 1)
 torch.cuda.set_device(1)
 DEVICE = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 print('Device:',DEVICE)
@@ -49,8 +48,6 @@ class Dataset(BaseDataset):
         preprocessing (albumentations.Compose): data preprocessing 
             (e.g. noralization, shape manipulation, etc.)
     """
-    
-    #CLASSES = ['0','1','2','3','4']
     
     def __init__(
             self, 

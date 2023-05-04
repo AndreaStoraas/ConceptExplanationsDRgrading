@@ -10,6 +10,13 @@ import torch.nn.functional as F
 from torchvision import models
 import torch.utils.model_zoo as model_zoo
 
+
+########################
+# Code from original Concept Bottleneck paper (slightly modified on lines 64-67)
+# https://github.com/yewsiang/ConceptBottleneck/tree/master/CUB
+#########################
+
+
 __all__ = ['MLP', 'Inception3', 'inception_v3', 'End2EndModel']
 
 model_urls = {
