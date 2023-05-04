@@ -6,13 +6,13 @@ This repo includes the source code for training the diabetic retinopathy (DR) cl
 
 ### Datasets
 This work applies the following datasets:
-* Diabetic Retinopathy Detection 
-* APTOS 2019
-* Messidor2
-* FGADR
-* DDR
-* DIARETDB1
-* IDRiD
+* APTOS 2019: https://www.kaggle.com/competitions/aptos2019-blindness-detection
+* Diabetic Retinopathy Detection: https://www.kaggle.com/competitions/diabetic-retinopathy-detection  
+* Messidor-2: https://www.adcis.net/en/third-party/messidor2/
+* FGADR: https://csyizhou.github.io/FGADR/
+* DDR: https://github.com/nkicsl/DDR-dataset
+* DIARETDB1: http://www.lut.it.fi/project/imageret
+* IDRiD: https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid
 
 ### References
 1. Kim, B., Wattenberg, M., Gilmer, J., Cai, C., Wexler, J., Viegas, F., Sayres, R.: Interpretability beyond feature attribution: Quantitative testing with concept
