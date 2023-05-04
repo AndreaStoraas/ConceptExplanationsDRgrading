@@ -4,18 +4,13 @@ import shutil
 import os
 import random
 
-image_path = 'Data/FGADR-Seg-set/Original_Images'
+#############Code for sorting the FGADR dataset################
 
-#Assume that the gradings are the right column in the .csv file:
-#The resulting class distribution is at least consistent with 
-#the dataset paper 
-annotated_df = pd.read_csv('Data/FGADR-Seg-set/DR_Seg_Grading_Label.csv', header = None,
+image_path = '../Data/FGADR-Seg-set/Original_Images'
+#The DR gradings are in the right column in the .csv file:
+annotated_df = pd.read_csv('../Data/FGADR-Seg-set/DR_Seg_Grading_Label.csv', header = None,
 names = ['Image','DR-grade'])
 image_list = os.listdir(image_path)
-#print('Number of annotated images:',annotated_df.shape[0])
-#print('Number of original images in folder:', len(image_list))
-#print(annotated_df['DR-grade'].value_counts())
-
 
 #Check that all images in folder have been annotated:
 for _img in image_list:
@@ -31,20 +26,20 @@ def sortImages():
         img_class = annotated_df.iloc[i,1]
         source_path = os.path.join(image_path,img_name)
         if img_class == 0:
-            target_path = os.path.join('Data/FGADR-Seg-set/FGADR-Sorted/0',img_name)
+            target_path = os.path.join('../Data/FGADR-Seg-set/FGADR-Sorted/0',img_name)
         elif img_class == 1:
-            target_path = os.path.join('Data/FGADR-Seg-set/FGADR-Sorted/1',img_name)
+            target_path = os.path.join('../Data/FGADR-Seg-set/FGADR-Sorted/1',img_name)
         elif img_class == 2:
-            target_path = os.path.join('Data/FGADR-Seg-set/FGADR-Sorted/2',img_name)
+            target_path = os.path.join('../Data/FGADR-Seg-set/FGADR-Sorted/2',img_name)
         elif img_class == 3:
-            target_path = os.path.join('Data/FGADR-Seg-set/FGADR-Sorted/3',img_name)
+            target_path = os.path.join('../Data/FGADR-Seg-set/FGADR-Sorted/3',img_name)
         elif img_class == 4:
-            target_path = os.path.join('Data/FGADR-Seg-set/FGADR-Sorted/4',img_name)
+            target_path = os.path.join('../Data/FGADR-Seg-set/FGADR-Sorted/4',img_name)
         else:
             print('Class number is not defined correctly!')
         shutil.copy(source_path,target_path)
 
-labeled_folder = 'Data/FGADR-Seg-set/FGADR-Sorted'
+labeled_folder = '../Data/FGADR-Seg-set/FGADR-Sorted'
 class_0 = os.path.join(labeled_folder,'0')
 class_1 = os.path.join(labeled_folder,'1')
 class_2 = os.path.join(labeled_folder,'2')
@@ -90,7 +85,7 @@ def splitTrainValTest():
         #Move training files to Train
         for tFile in trainFiles:
             sourceFile = os.path.join(folderPath,tFile)
-            targetPath = os.path.join('Data/TrainFGADR',str(_class),tFile)
+            targetPath = os.path.join('../Data/TrainFGADR',str(_class),tFile)
             shutil.copy(sourceFile,targetPath)
         #Check that no duplicates in validation and test files:
         for vFile in validFiles:
@@ -99,32 +94,62 @@ def splitTrainValTest():
         #Move validation files to Valid
         for vFile in validFiles:
             sourceFile = os.path.join(folderPath,vFile)
-            targetPath = os.path.join('Data/ValidFGADR',str(_class),vFile)
+            targetPath = os.path.join('../Data/ValidFGADR',str(_class),vFile)
             shutil.copy(sourceFile,targetPath)
         #Move test files to Test
         for testFile in testFiles:
             sourceFile = os.path.join(folderPath,testFile)
-            targetPath = os.path.join('Data/TestFGADR',str(_class),testFile)
+            targetPath = os.path.join('../Data/TestFGADR',str(_class),testFile)
             shutil.copy(sourceFile,targetPath)
 
 def moveToCombined():
+    #Move the training images to the larger combined test folder:
     for _class in range(5):
         #Get the correct folder, matching with the class:
-        folderPath = os.path.join('Data/CroppedData/CroppedTestFGADR',str(_class))
+        folderPath = os.path.join('../Data/CroppedDataKaggle/CroppedTrainFGADR',str(_class))
         #list all files in folder:
         classFiles = os.listdir(folderPath)
         for _file in classFiles:
             source_path = os.path.join(folderPath,_file)
-            target_path = os.path.join('Data/CroppedData/CroppedTestCombinedXL',str(_class),_file)
+            target_path = os.path.join('../Data/CroppedDataKaggle/CroppedTrainCombinedXL',str(_class),_file)
+            shutil.copy(source_path,target_path)
+    #Move the validation images to the larger combined test folder:
+    for _class in range(5):
+        #Get the correct folder, matching with the class:
+        folderPath = os.path.join('../Data/CroppedDataKaggle/CroppedValidFGADR',str(_class))
+        #list all files in folder:
+        classFiles = os.listdir(folderPath)
+        for _file in classFiles:
+            source_path = os.path.join(folderPath,_file)
+            target_path = os.path.join('../Data/CroppedDataKaggle/CroppedValidCombinedXL',str(_class),_file)
+            shutil.copy(source_path,target_path)
+    #Move the test images to the larger combined test folder:
+    for _class in range(5):
+        #Get the correct folder, matching with the class:
+        folderPath = os.path.join('../Data/CroppedDataKaggle/CroppedTestFGADR',str(_class))
+        #list all files in folder:
+        classFiles = os.listdir(folderPath)
+        for _file in classFiles:
+            source_path = os.path.join(folderPath,_file)
+            target_path = os.path.join('../Data/CroppedDataKaggle/CroppedTestCombinedXL',str(_class),_file)
             shutil.copy(source_path,target_path)
 
+#Run each of these functions in turn to 
+#1. sort the images into DR class folders:
 #sortImages()
+
+# 2. Split the data into training, validation and test sets (80%, 10%, 10%):
 #splitTrainValTest()
+
+#NB! Before moving the images, they must be cropped by running the 'preprocessImages.py'!
+# 3. Combine the test sets with the DR Detection, APTOS 2019 and Messidor training, validation and test sets:
 #moveToCombined()
+
+
 #List the number of images in each class
 #to make sure it is correct:
 for i in range(5):
-    class_folder = os.path.join('Data/CroppedData/CroppedTestCombinedXL',str(i))
+    class_folder = os.path.join('../Data/CroppedDataKaggle/CroppedTestCombinedXL',str(i))
     class_list = os.listdir(class_folder)
     print('Looking at class:',i)
     print('Number of images:',len(class_list))

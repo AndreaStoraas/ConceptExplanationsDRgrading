@@ -55,23 +55,17 @@ class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
     
     Args:
-        images_dir (str): path to images folder
-        masks_dir (str): path to segmentation masks folder
+        filepaths (list): list of paths to images
         class_values (list): values of classes to extract from segmentation mask
         augmentation (albumentations.Compose): data transfromation pipeline 
             (e.g. flip, scale, etc.)
-        preprocessing (albumentations.Compose): data preprocessing 
-            (e.g. noralization, shape manipulation, etc.)
     
     """
-    
-    #CLASSES = ['0','1','2','3','4']
     
     def __init__(
             self, 
             filepaths, 
-            augmentation=None, 
-            #preprocessing=None,
+            augmentation=None,
     ):
         self.filepaths = filepaths
         self.augmentation = augmentation
@@ -81,8 +75,6 @@ class Dataset(BaseDataset):
         image_path = self.filepaths[i]
         image = cv.imread(image_path)
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        #print('Checking the class:')
-        #print(os.path.normpath(image_path).split(os.sep)[-2])
         #Check the class:
         if os.path.normpath(image_path).split(os.sep)[-2]=='0':
             label = 0
@@ -132,12 +124,6 @@ def train(model, dataloaders, optimizer, criterion, n_epochs):
                     y_true = y_true.to(DEVICE)
 
                     y_pred = model(inputs)
-                    #Will give the aux logits together with predictions when in training mode:
-                    # https://pytorch.org/vision/0.9/_modules/torchvision/models/inception.html
-                    #if phase == "TRAIN":
-                    #    y_pred, aux_output = model(inputs)
-                    #else:
-                    #    y_pred = model(inputs)
                     
                     loss = criterion(y_pred, y_true)
 
@@ -153,9 +139,6 @@ def train(model, dataloaders, optimizer, criterion, n_epochs):
                     running_loss += loss.item()
                     running_acc += metrics.accuracy_score(y_true, y_pred) 
                     running_fscore += metrics.f1_score(y_true, y_pred, average='macro')
-            
-            #print('Phase:',phase)
-            #print('Length dataloader',len(dataloader))
             mean_loss = running_loss / len(dataloader)
             mean_acc = running_acc / len(dataloader)
             mean_fscore = running_fscore / len(dataloader)
@@ -178,19 +161,13 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
 
     model_save_path = os.path.join(output_path, "CroppedKaggle_Densenet121_100epochs.pt")
     #Pretrained network
-    #If pretrained from scratch, aux_logits=True can help
-    #https://discuss.pytorch.org/t/why-auxiliary-logits-set-to-false-in-train-mode/40705/4
     #To avoid the warning:
-    #model = models.inception_v3(weights=models.Inception_V3_Weights.IMAGENET1K_V1)
-    #Train and Densenet-121 instead...
     print('Loading the model...')
     model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
 
-
     #How to extract intermediate layers from the model:
     #https://discuss.pytorch.org/t/how-can-i-extract-intermediate-layer-output-from-loaded-cnn-model/77301/2
-    #model.fc = nn.Linear(model.fc.in_features, n_classes)
-    #When Densenet121, the classification layer is called model.classifier, not model.fc
+    #When Densenet121, the classification layer is called model.classifier
     model.classifier = nn.Linear(model.classifier.in_features, n_classes)
 
     model = model.to(DEVICE)
@@ -198,61 +175,7 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
     optimizer = torch.optim.Adam(model.parameters()) 
     #Since multiclass, use crossEntropyLoss:
     criterion = nn.CrossEntropyLoss()
-
-    #From Zoi: Use LR scheduler
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 10, gamma=0.1, last_epoch=-1)
-
-    #February 13, after discussion with Josefine:
-    #Remove centerCrop before training to avoid loss of information
-    #Transformation from Zoi's code on fundus images:
-    #Can try to compensate for the gap between original image size and new image size
-    # https://stackoverflow.com/questions/72595995/how-to-train-network-on-images-of-different-sizes-pytorch
-    transform_train_fund = transforms.Compose([transforms.Resize([620]), 
-                                    transforms.RandomVerticalFlip(),
-                                    transforms.RandomRotation(3),
-                                    #transforms.CenterCrop([587]),
-                                    transforms.ToTensor(),
-                                    #Normalize to ImageNet...
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                                    transforms.RandomErasing()])
-    
-    transform_val_fund = transforms.Compose([transforms.Resize([620]),
-                                    #transforms.CenterCrop([587]),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    #Alternative augmentation
-    #Also try to NOT resize the images (even though this might cause issues)
-    #From line 1892: https://github.com/keras-team/keras/blob/v2.11.0/keras/preprocessing/image.py#L1166-L2144
-    #contrast_range=0.2,
-    #brightness_range=20.,
-    #hue_range=10.,
-    #saturation_range=20.,
-    #blur_and_sharpen=True, #not defined in keras documentation
-    #rotate_range=180.,
-    #scale_range=0.2,
-    #shear_range=0.2,
-    #shift_range=0.2,
-    #do_mirror=True, #Not defined in keras documentation
-    #Also check this out:
-    #https://www.kaggle.com/competitions/aptos2019-blindness-detection/discussion/107987
-    transform_train_aptos = transforms.Compose([transforms.Resize([620]), 
-                                    transforms.RandomVerticalFlip(p=0.5), # corresponds to 'do mirror'
-                                    transforms.RandomHorizontalFlip(p=0.5),
-                                    transforms.RandomRotation(180), #corresponds to 'RotateRange'
-                                    transforms.ColorJitter(brightness=1,
-                                    contrast=(0.8,1.2), saturation=1,hue=0.1), #Hue must lie between -0.5 and 0.5
-                                    transforms.RandomAffine(degrees = 0,scale=(0.8,1.2),shear=0.2),
-                                    transforms.RandomPerspective(distortion_scale=0.2,p=0.5),
-                                    transforms.RandomApply(torch.nn.ModuleList([
-                                        transforms.GaussianBlur(kernel_size = (7, 13))]),p=0.5),
-                                    transforms.RandomResizedCrop((620,620), scale = (0.9, 1.0)), #Add some cropping and resize to (620,620)
-                                    transforms.ToTensor(),
-                                    #Normalize to ImageNet...
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    transform_val_aptos = transforms.Compose([transforms.Resize([620]),
-                                    transforms.ToTensor(),
-                                    #Normalize to ImageNet...
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+#Use CLAHE for increased contrast in the images:
     transform_train_clahe = albu.Compose([albu.CLAHE(clip_limit=2.0,p=1.0),
         albu.Resize(620,620),
         albu.HorizontalFlip(p=0.5),
@@ -271,27 +194,6 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
         albu.Normalize(mean = (0.485, 0.456, 0.406),std=(0.229, 0.224, 0.225),p=1.0),
         ToTensorV2()
     ])
-
-    '''
-    #NB! Must change the resize to avoid kernel size issues!
-    # https://discuss.pytorch.org/t/kernel-size-cant-greater-than-actual-input-size/21579
-    train_transforms = transforms.Compose([
-        #transforms.Resize((224, 224)),
-        transforms.Resize((620,620)),
-        transforms.RandomRotation(degrees = (0,25)), # Add rotation
-        #transforms.RandomResizedCrop((224,224), scale = (0.9, 1.0)), #Add some cropping, resize back to (224,224)
-        transforms.RandomResizedCrop((620,620), scale = (0.9, 1.0)), #Add some cropping, resize back to (620,620)
-        transforms.ToTensor(),
-    ])
-    
-    valid_transforms = transforms.Compose([
-        #transforms.Resize((224, 224)),
-        transforms.Resize((620,620)),
-        transforms.ToTensor(),
-    ])
-    '''
-    #train_dataset = datasets.ImageFolder(os.path.join(data_dir, "CroppedTrainCombined"), transform_train_aptos)
-    #valid_dataset = datasets.ImageFolder(os.path.join(data_dir, "CroppedValidCombined"), transform_val_aptos)
 
     #Create a customized dataset
     #See this link: https://albumentations.ai/docs/examples/pytorch_classification/
@@ -339,16 +241,7 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
     class2_observations = len(os.listdir('Data/CroppedDataKaggle/CroppedTrainCombinedXL/2'))
     class3_observations = len(os.listdir('Data/CroppedDataKaggle/CroppedTrainCombinedXL/3'))
     class4_observations = len(os.listdir('Data/CroppedDataKaggle/CroppedTrainCombinedXL/4'))
-    #class0_observations = len(os.listdir('Data/TrainCombined/0'))
-    #class1_observations = len(os.listdir('Data/TrainCombined/1'))
-    #class2_observations = len(os.listdir('Data/TrainCombined/2'))
-    #class3_observations = len(os.listdir('Data/TrainCombined/3'))
-    #class4_observations = len(os.listdir('Data/TrainCombined/4'))
-    #print('Observations for class 0:', class0_observations)
-    #print('Observations for class 1:', class1_observations)
-    #print('Observations for class 2:', class2_observations)
-    #print('Observations for class 3:', class3_observations)
-    #print('Observations for class 4:', class4_observations)
+
     class_sample_count = np.array([class0_observations,class1_observations,class2_observations,class3_observations,class4_observations])
     class_weights = 1. / class_sample_count
     targets = [0,1,2,3,4]
@@ -356,19 +249,11 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
     for _t in targets:
         #Get X number of class weights, where X is number of obs for that given class
         sample_weigths_targetList = [class_weights[_t] for i in range(list(class_sample_count)[_t])]
-        print('Weights for class',_t)
-        print(sample_weigths_targetList[0])
         sample_weights +=  sample_weigths_targetList
-    #The length of sample_weights must equal the total number of obs in training dataset:
-    #print('Length of the sample weight list:',len(sample_weights))
-    #print('Entire sample weight list:')
-    #print(sample_weights[0])
+
     sample_weights = np.array(sample_weights)
     class_weights = torch.from_numpy(sample_weights)
     my_sampler = WeightedRandomSampler(class_weights,len(class_weights))    
-    print('Length of class weights:',len(class_weights))
-
-    #train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=8) #Change to 8 workers due to warning
     #Add the weighted sampler (cannot use shuffle at the same time):
     # https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
     train_loader = DataLoader(train_dataset, batch_size=8, num_workers=8, sampler=my_sampler)
@@ -390,8 +275,6 @@ def train_model(output_path, data_dir, n_classes, n_epochs=25):
 
 
 if __name__ == "__main__":
-
-    #args = argument_parser.parse_args()
 
     train_model(
         output_path = args.output_path,

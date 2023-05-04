@@ -9,19 +9,17 @@ import cv2
 #concept activation vectors (CAVs)
 
 #Start with the DIARETDB1 dataset, as we have segmentation masks
-#for 4 potentially relevant concepts (but not NV)
+#for 4 potentially relevant concepts (but not IRMA and NV)
 diaret_images = os.listdir('../Data/diaretdb1_v_1_1/resources/images/ddb1_fundusimages')
-#print('Some example images:',diaret_images[:5])
 print('Total number of images:',len(diaret_images))
 
 #Want to find images that do not have completely black segmentation masks
 # for a given abnormality
 mask_path = '../Data/diaretdb1_v_1_1/resources/images/ddb1_groundtruth'
 
-'''
 smalldots_path = os.path.join(mask_path,'redsmalldots')
 smalldots_images = os.listdir(smalldots_path)
-print('Number of images with redsmalldots masks:',len(smalldots_images))
+print('Number of images with soft exudates-masks:',len(smalldots_images))
 
 images_with_smalldots = []
 for _img in smalldots_images:
@@ -29,7 +27,6 @@ for _img in smalldots_images:
     #Read in the segmentation mask:
     mask = cv2.imread(img_mask,0)
     #Look at the different values in the mask
-    #print(np.unique(mask))
     #If only 0's, this means the abnormality is not present in the image
     if (len(np.unique(mask))==1) and (mask[0][0]==0):
         print('Entire mask is black!')
@@ -37,13 +34,12 @@ for _img in smalldots_images:
         #This image includes the abnormality
         images_with_smalldots.append(_img)
 print('Number of images which actually contain redsmalldots:', len(images_with_smalldots))
-#print(images_with_smalldots)
 
 #Repeat for the other abnormalities as well:
 #Hemorrhages:
 hemorrhage_path = os.path.join(mask_path,'hemorrhages')
 hemorrhage_images = os.listdir(hemorrhage_path)
-print('Number of images with hemorrhage masks:',len(hemorrhage_images))
+print('Number of images with soft exudates-masks:',len(hemorrhage_images))
 
 images_with_hemorrhage = []
 for _img in hemorrhage_images:
@@ -51,7 +47,6 @@ for _img in hemorrhage_images:
     #Read in the segmentation mask:
     mask = cv2.imread(img_mask,0)
     #Look at the different values in the mask
-    #print(np.unique(mask))
     #If only 0's, this means the abnormality is not present in the image
     if (len(np.unique(mask))==1) and (mask[0][0]==0):
         print('Entire mask is black!')
@@ -59,12 +54,10 @@ for _img in hemorrhage_images:
         #This image includes the abnormality
         images_with_hemorrhage.append(_img)
 print('Number of images which actually contain hemorrhages:', len(images_with_hemorrhage))
-#print(images_with_hemorrhage)
 
 #Hard exudates:
 hardEx_path = os.path.join(mask_path,'hardexudates')
 hardEx_images = os.listdir(hardEx_path)
-print('Number of images with hard exudates-masks:',len(hardEx_images))
 
 images_with_hardEx = []
 for _img in hardEx_images:
@@ -72,7 +65,6 @@ for _img in hardEx_images:
     #Read in the segmentation mask:
     mask = cv2.imread(img_mask,0)
     #Look at the different values in the mask
-    #print(np.unique(mask))
     #If only 0's, this means the abnormality is not present in the image
     if (len(np.unique(mask))==1) and (mask[0][0]==0):
         print('Entire mask is black!')
@@ -80,7 +72,6 @@ for _img in hardEx_images:
         #This image includes the abnormality
         images_with_hardEx.append(_img)
 print('Number of images which actually contain hard exudates:', len(images_with_hardEx))
-
 
 #Soft exudates:
 softEx_path = os.path.join(mask_path,'softexudates')
@@ -93,7 +84,6 @@ for _img in softEx_images:
     #Read in the segmentation mask:
     mask = cv2.imread(img_mask,0)
     #Look at the different values in the mask
-    #print(np.unique(mask))
     #If only 0's, this means the abnormality is not present in the image
     if (len(np.unique(mask))==1) and (mask[0][0]==0):
         print('Entire mask is black!')
@@ -101,35 +91,6 @@ for _img in softEx_images:
         #This image includes the abnormality
         images_with_softEx.append(_img)
 print('Number of images which actually contain soft exudates:', len(images_with_softEx))
-'''
-
-#Next, we can pick representative example images for the different concepts:
-def sortByAbnormalities():
-    sortedAbnormalities_path = 'DiaretDB1_sortedAbnormalities'
-    for _img in images_with_smalldots:
-        #If small red dots in image, we copy it to the redsmalldots
-        source_path = os.path.join(smalldots_path,_img)
-        target_path = os.path.join(sortedAbnormalities_path,'redsmalldots',_img)
-        shutil.copy(source_path, target_path)
-    for _img in images_with_hemorrhage:
-        source_path = os.path.join(hemorrhage_path,_img)
-        target_path = os.path.join(sortedAbnormalities_path,'hemorrhages',_img)
-        shutil.copy(source_path,target_path)
-    for _img in images_with_hardEx:
-        source_path = os.path.join(hardEx_path,_img)
-        target_path = os.path.join(sortedAbnormalities_path,'hardexudates',_img)
-        shutil.copy(source_path,target_path)
-    for _img in images_with_softEx:
-        source_path = os.path.join(softEx_path,_img)
-        target_path = os.path.join(sortedAbnormalities_path,'softexudates',_img)
-        shutil.copy(source_path,target_path)
-
-#sortByAbnormalities()
-#Check that all images were correctly moved:
-#print('Number of images in MA folder:', len(os.listdir('DiaretDB1_sortedAbnormalities/redsmalldots')))
-#print('Number of images in hemorrhage folder:', len(os.listdir('DiaretDB1_sortedAbnormalities/hemorrhages')))
-#print('Number of images in hard exudates folder:', len(os.listdir('DiaretDB1_sortedAbnormalities/hardexudates')))
-#print('Number of images in soft exudates folder:', len(os.listdir('DiaretDB1_sortedAbnormalities/softexudates')))
 
 def createOverviewDf():
     #Also want to create an overview df over which abnormalities that are present in which image
@@ -161,15 +122,9 @@ def createOverviewDf():
     #Write to csv for later reference:
     overviewDf.to_csv('DiaretDB1_overviewAbnormalities.csv',header=True)
 
-#createOverviewDf()
-
 #Read in the overview file:
 overviewDf = pd.read_csv('ConceptFoldersDiaretDB/DiaretDB1_overviewAbnormalities.csv', index_col = 'Unnamed: 0')
 #Loop through and see which images have MA + all other abnormalities
-#And which have not MA, but the rest of the abonrmalities
-# -> Several images with all abnormalities present
-# BUT only ONE image without MA, where all other abnormalities are present...
-
 
 #Also inspect hemorrhages, soft and hard exudates:
 print(overviewDf.head())
@@ -199,82 +154,82 @@ def SortByCombinations():
         #If no abnormalities:
         if (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'NoAbnormalities',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             noAbnorm_counter += 1
         #If only MA:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'MA',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_counter += 1
         #If only Hemo:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'HE',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_counter += 1
         #If only SoftEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'SoftEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_counter += 1
         #If only HardEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HardEx_counter += 1
         #If MA + HE:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'MA_HE',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_counter += 1
         #If MA + SoftEx:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'MA_SoftEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_counter += 1
         #If MA + HardEx:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'MA_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HardEx_counter += 1
         #If HE + SoftEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'HE_SoftEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_counter += 1
         #If HE + HardEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'HE_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_HardEx_counter += 1
         #If SoftEx + HardEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'SoftEx_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_HardEx_counter += 1
         #If MA_HE_SoftEx:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==0) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_counter += 1
         #If MA + HE + HardEx:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==0):
             target_path = os.path.join(target_folder,'MA_HE_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_HardEx_counter += 1
         #If MA + SoftEx + HardEx:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==0) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'MA_SoftEx_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_HardEx_counter += 1
         #If HE + SoftEx + HardEx:
         elif (overviewDf.iloc[i,1]==0) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'HE_SoftEx_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_HardEx_counter += 1
         #If all abnormalities:
         elif (overviewDf.iloc[i,1]==1) and (overviewDf.iloc[i,2]==1) and (overviewDf.iloc[i,3]==1) and (overviewDf.iloc[i,4]==1):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx_HardEx',_img)
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_HardEx_counter += 1
     print('Number of no DR images:',noAbnorm_counter)
     print('Number of MA images:',MA_counter)
@@ -306,4 +261,8 @@ def SortByCombinations():
     print('Number of sorted images with  HE + SoftEx + HardEx:',len(os.listdir(os.path.join(target_folder, 'HE_SoftEx_HardEx'))))
     print('Number of sorted images with ALL abnormalities:',len(os.listdir(os.path.join(target_folder, 'MA_HE_SoftEx_HardEx'))))
 
+#Uncomment code below to:
+# 1. Create overview df:
+#createOverviewDf()
+# 2. Sort images by combinations of concepts:
 #SortByCombinations()

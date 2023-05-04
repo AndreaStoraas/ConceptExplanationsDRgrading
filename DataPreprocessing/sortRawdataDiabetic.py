@@ -6,29 +6,18 @@ import random
 
 from sklearn.model_selection import GroupShuffleSplit
 
-imgFolderpath = 'Data/DiabeticRetinopathyDetection/train'
+#############Code for sorting the Diabetic Retinopathy Detection dataset from Kaggle################
+
+imgFolderpath = '../Data/DiabeticRetinopathyDetection/train'
 #Read in the label-file for the training data
-labelDf = pd.read_csv('Data/DiabeticRetinopathyDetection/trainLabels.csv')
+labelDf = pd.read_csv('../Data/DiabeticRetinopathyDetection/trainLabels.csv')
 print(labelDf.head())
 print('Number of training instances with labels:',labelDf.shape[0])
 print('Distribution of the different levels of DR:', labelDf['level'].value_counts())
 
-trainFiles = os.listdir('Data/DiabeticRetinopathyDetection/train')
+trainFiles = os.listdir(imgFolderpath)
 print('Number of images in training folder:',len(trainFiles))
-dataFolder = 'Data/DiabeticRetinopathyDetection/train'
 
-
-'''
-counter = 0
-for _img in trainFiles:
-    #Remove the .jpeg-part (since this is not in the labelDf)
-    imageName = _img[:-5]
-    #print(imageName)
-    #Check that the image file is actually in the labelDf:
-    if imageName in labelDf.iloc[:,0].tolist():
-        counter +=1
-print('Number of matching images:',str(counter))
-'''
 #Want to extract the images and place them in folders for corresponding 
 #level of DR:
 def sortData():
@@ -51,21 +40,16 @@ def sortData():
         #Find corresponding image
         imageFilename = imageId + '.jpeg'
         imageFilepath = os.path.join(imgFolderpath,imageFilename)
-        targetPath = os.path.join('Data/DiabeticRetinopathyDetection',classFolder,imageFilename)
+        targetPath = os.path.join('../Data/DiabeticRetinopathyDetection',classFolder,imageFilename)
         #Copy the file from train folder to the correct class folder
         shutil.copy(imageFilepath,targetPath)
 
 classList = ['noDR','Mild','Moderate','Severe','Proliferative']
-#Inspect the class distribution:
-#for _class in classList:
-    #classFiles = os.listdir(os.path.join('Data/DiabeticRetinopathyDetection',_class))
-    #print('Working with class:',_class)
-    #print('Number of images for this class:',len(classFiles))
+
 
 #Split into train, validation and test:
 #NB need to ensure that same ID in train/validation/test!
 #Because right/left eye from same patient
-
 #Add a new column with just the patient id, regardless of eye:
 labelDf['UniqueId'] = 'Lol'
 for i in range(labelDf.shape[0]):
@@ -75,31 +59,6 @@ for i in range(labelDf.shape[0]):
     labelDf.iloc[i,-1]=int(idName)
 print(labelDf['UniqueId'].describe())
 
-'''
-#Check if same ID always  have same grading of both eyes:
-# (It does not!)
-differentLevelsCounter = 0
-for _id in uniqueIds:
-    #Get the two imagenames:
-    leftImage = _id + '_left'
-    rightImage = _id + '_right'
-    #print('Name of image left eye:')
-    #print(labelDf[labelDf['image']==leftImage]['image'])
-    #print(labelDf[labelDf['image']==leftImage]['level'])
-    #print('Name of image right eye:')
-    #print(labelDf[labelDf['image']==rightImage]['image'])
-    #print(labelDf[labelDf['image']==rightImage]['level'])
-    leftLevel = labelDf[labelDf['image']==leftImage]['level'].values
-    rightLevel = labelDf[labelDf['image']==rightImage]['level'].values
-    if leftLevel!=rightLevel:
-        differentLevelsCounter += 1
-        print('Patient has different DR levels in each eye')
-        print(labelDf[labelDf['image']==leftImage]['level'])
-        print(labelDf[labelDf['image']==rightImage]['level'])
-
-print('Total number of patients with different levels in each eye:')
-print(str(differentLevelsCounter))
-'''
 def trainValidTestSplit():
 #Find correct number for train, valid and test:
     num_train = int(labelDf.shape[0]*0.8)
@@ -112,15 +71,12 @@ def trainValidTestSplit():
     print('Number of test samples:',str(num_test))
     print('In total:', str(num_train+num_valid+num_test))
     print('Should match with number of samples in dataset:',labelDf.shape[0])
-
-    
     #Use GroupShuffleSplit to split the data
     # https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupShuffleSplit.html
     #Define the groups:
     my_groups = labelDf['UniqueId']
     #Divide test number by 2 since 2 observations/eyes per ID:
     groupss =GroupShuffleSplit(n_splits=1, random_state=42, test_size=int(num_test/2), train_size=None)
-
 
     for i, (trainValid_index, test_index) in enumerate(groupss.split(labelDf['UniqueId'], groups=my_groups)):
         trainValidDf = labelDf.iloc[trainValid_index,:]
@@ -134,10 +90,6 @@ def trainValidTestSplit():
         trainDf = trainValidDf.iloc[train_index,:]
         validDf = trainValidDf.iloc[valid_index,:]
 
-    print(trainDf.shape)
-    print(validDf.shape)
-    print(testDf.shape)
-
     #Check that same id is not in train, test or validation:
     for i in range(trainDf.shape[0]):
         if trainDf.iloc[i,-1] in validDf['UniqueId'].tolist():
@@ -148,8 +100,6 @@ def trainValidTestSplit():
     for j in range(validDf.shape[0]):
         if validDf.iloc[j,-1] in testDf['UniqueId'].tolist():
             print('Same patient in validation and test set! Something went wrong!')
-
-
     #Get the shortened list of unique IDs
     uniqueTrainIds = set(trainDf['UniqueId'].tolist())
     uniqueTrainIds = list(uniqueTrainIds)
@@ -161,14 +111,14 @@ def trainValidTestSplit():
 
     #Move train data to correct training folder according to DR level:
     for _id in uniqueTrainIds:
-        targetFolder = 'Data/TrainDRDetection'
+        targetFolder = '../Data/TrainDRDetection'
         #Find the left eye data:
         patient_idLeft = str(_id)+'_left'
         #Create corresponding filename:
         image_nameLeft = patient_idLeft+'.jpeg'
         classLeft = trainDf[trainDf['image']==patient_idLeft]['level'].values[0]
         #Get the source path to find the corresponding image:
-        sourcePathLeft = os.path.join(dataFolder,image_nameLeft)
+        sourcePathLeft = os.path.join(imgFolderpath,image_nameLeft)
         #Target directory depends on which DR level the patient has:
         if classLeft == 0:
             targetPathLeft = os.path.join(targetFolder,'0')
@@ -189,12 +139,8 @@ def trainValidTestSplit():
         patient_idRight = str(_id)+'_right'
         image_nameRight = patient_idRight+'.jpeg'
         classRight = trainDf[trainDf['image']==patient_idRight]['level'].values[0]
-        #print('Class for right eye:',classRight)
-        #print('The patient ID:',patient_idRight)
-        #print('The entire row:')
-        #print(trainDf[trainDf['image']==patient_idRight])
         #Get the source path to find the corresponding image:
-        sourcePathRight = os.path.join(dataFolder,image_nameRight)
+        sourcePathRight = os.path.join(imgFolderpath,image_nameRight)
         #Target directory depends on which DR level the patient has:
         if classRight == 0:
             targetPathRight = os.path.join(targetFolder,'0')
@@ -213,14 +159,14 @@ def trainValidTestSplit():
     
     #Repeat for validation and test:
     for _id in uniqueValidIds:
-        targetFolder = 'Data/ValidDRDetection'
+        targetFolder = '../Data/ValidDRDetection'
         #Find the left eye data:
         patient_idLeft = str(_id)+'_left'
         #Create corresponding filename:
         image_nameLeft = patient_idLeft+'.jpeg'
         classLeft = validDf[validDf['image']==patient_idLeft]['level'].values[0]
         #Get the source path to find the corresponding image:
-        sourcePathLeft = os.path.join(dataFolder,image_nameLeft)
+        sourcePathLeft = os.path.join(imgFolderpath,image_nameLeft)
         #Target directory depends on which DR level the patient has:
         if classLeft == 0:
             targetPathLeft = os.path.join(targetFolder,'0')
@@ -242,7 +188,7 @@ def trainValidTestSplit():
         image_nameRight = patient_idRight+'.jpeg'
         classRight = validDf[validDf['image']==patient_idRight]['level'].values[0]
         #Get the source path to find the corresponding image:
-        sourcePathRight = os.path.join(dataFolder,image_nameRight)
+        sourcePathRight = os.path.join(imgFolderpath,image_nameRight)
         #Target directory depends on which DR level the patient has:
         if classRight == 0:
             targetPathRight = os.path.join(targetFolder,'0')
@@ -261,14 +207,14 @@ def trainValidTestSplit():
 
     #...And for the test set:    
     for _id in uniqueTestIds:
-        targetFolder = 'Data/TestDRDetection'
+        targetFolder = '../Data/TestDRDetection'
         #Find the left eye data:
         patient_idLeft = str(_id)+'_left'
         #Create corresponding filename:
         image_nameLeft = patient_idLeft+'.jpeg'
         classLeft = testDf[testDf['image']==patient_idLeft]['level'].values[0]
         #Get the source path to find the corresponding image:
-        sourcePathLeft = os.path.join(dataFolder,image_nameLeft)
+        sourcePathLeft = os.path.join(imgFolderpath,image_nameLeft)
         #Target directory depends on which DR level the patient has:
         if classLeft == 0:
             targetPathLeft = os.path.join(targetFolder,'0')
@@ -290,7 +236,7 @@ def trainValidTestSplit():
         image_nameRight = patient_idRight+'.jpeg'
         classRight = testDf[testDf['image']==patient_idRight]['level'].values[0]
         #Get the source path to find the corresponding image:
-        sourcePathRight = os.path.join(dataFolder,image_nameRight)
+        sourcePathRight = os.path.join(imgFolderpath,image_nameRight)
         #Target directory depends on which DR level the patient has:
         if classRight == 0:
             targetPathRight = os.path.join(targetFolder,'0')
@@ -308,12 +254,19 @@ def trainValidTestSplit():
         shutil.copy(sourcePathRight, targetPathRight)
 
 
-trainValidTestSplit()
+#Uncomment to
+# 1. Sort the dataset into folders for DR severity
+#sortData()
+# 2. Split into training, validation and test sets (80%, 10%, 10%):
+#trainValidTestSplit()
+
+
+
 #Check how many images in each folder:
 #Start with training folder:
 print('Class distribution in training set:')
 for i in range(5):
-    classFolder = os.path.join('Data/TrainDRDetection',str(i))
+    classFolder = os.path.join('../Data/TrainDRDetection',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))
@@ -321,7 +274,7 @@ for i in range(5):
 #Repeat for validation and test folders:
 print('Class distribution in validation set:')
 for i in range(5):
-    classFolder = os.path.join('Data/ValidDRDetection',str(i))
+    classFolder = os.path.join('../Data/ValidDRDetection',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))
@@ -329,7 +282,7 @@ for i in range(5):
 #Start with training folder:
 print('Class distribution in testing set:')
 for i in range(5):
-    classFolder = os.path.join('Data/TestDRDetection',str(i))
+    classFolder = os.path.join('../Data/TestDRDetection',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))

@@ -26,12 +26,10 @@ np.random.seed(0)
 #Should use torch.manual_seed: https://pytorch.org/vision/stable/transforms.html
 torch.manual_seed(0)
 
-#First test on the test part of the DRDetection dataset:
+#Path to the test data folder:
 test_path = 'Data/CroppedDataKaggle/CroppedTestCombinedXL'
-#test_path = 'TCAV_work/RepresentativeTestFolderKaggleCropped'
 print('This is the test path:',test_path)
 #Define the device:
-#Use device ID 0 (Vajira uses ID 1)
 torch.cuda.set_device(0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -39,18 +37,6 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #=========================================
 # Helper functions and Datasets
 #=========================================
-#Helper function for ordinal regression:
-#See original code in Medium article:
-# https://towardsdatascience.com/how-to-perform-ordinal-regression-classification-in-pytorch-361a2a095a99
-def prediction2label(pred: np.ndarray):
-    """Convert ordinal predictions to class labels, e.g.
-    
-    [0.9, 0.1, 0.1, 0.1] -> 0
-    [0.9, 0.9, 0.1, 0.1] -> 1
-    [0.9, 0.9, 0.9, 0.1] -> 2
-    etc.
-    """
-    return (pred > 0.5).cumprod(axis=1).sum(axis=1) - 1
 
 
 #Define dataset class:
@@ -58,23 +44,18 @@ class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
     
     Args:
-        images_dir (str): path to images folder
-        masks_dir (str): path to segmentation masks folder
+        filepaths (list): list of paths to images
         class_values (list): values of classes to extract from segmentation mask
         augmentation (albumentations.Compose): data transfromation pipeline 
             (e.g. flip, scale, etc.)
-        preprocessing (albumentations.Compose): data preprocessing 
-            (e.g. noralization, shape manipulation, etc.)
     
     """
-    
-    #CLASSES = ['0','1','2','3','4']
+
     
     def __init__(
             self, 
             filepaths, 
             augmentation=None, 
-            #preprocessing=None,
     ):
         self.filepaths = filepaths
         self.augmentation = augmentation
@@ -84,8 +65,6 @@ class Dataset(BaseDataset):
         image_path = self.filepaths[i]
         image = cv.imread(image_path)
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        #print('Checking the class:')
-        #print(os.path.normpath(image_path).split(os.sep)[-2])
         #Check the class:
         if os.path.normpath(image_path).split(os.sep)[-2]=='0':
             label = 0
@@ -127,7 +106,6 @@ def test_model(model, dataloader):
             y_true = y_true.detach().cpu().numpy()
             #Predict the most probable class:
             y_pred = np.argmax(y_pred.detach().cpu().numpy(), axis=1)
-            #y_pred = prediction2label(y_pred.detach().cpu().numpy()) #<- Since ordinal regression model
             running_acc += metrics.accuracy_score(y_true, y_pred) 
             running_f1 += metrics.f1_score(y_true, y_pred, average = 'macro')
             all_predicted.append(y_pred)
@@ -146,11 +124,6 @@ def test_model(model, dataloader):
 
 
 #Define the dataloader:
-#February 13: Avoid CenterCrop to not lose information
-transform_test_fund = transforms.Compose([transforms.Resize([620]),
-                                    #transforms.CenterCrop([587]),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
 transform_test_clahe = albu.Compose([albu.CLAHE(clip_limit=2.0,p=1),
         albu.Resize(620,620),
@@ -159,7 +132,6 @@ transform_test_clahe = albu.Compose([albu.CLAHE(clip_limit=2.0,p=1),
     ])
 
 n_classes = 5
-#test_dataset = datasets.ImageFolder(test_path, transform_test_fund)
 #Add all filepaths for the test dataset to a list
 small_list = [os.path.join(test_path, str(class_id)) for class_id in range(n_classes)]
 print('Small list testing:', small_list)
@@ -176,17 +148,11 @@ for _list in small_list:
     test_filepath += all_paths
 print('Length of test files:',len(test_filepath))
 
-#test_dataset = Dataset('Data/CroppedData/CroppedTestCombined',augmentation = transform_test_clahe)
 test_dataset = Dataset(test_filepath,augmentation = transform_test_clahe)
 test_loader = DataLoader(test_dataset,batch_size=1,shuffle=False,num_workers=4)
 #Load the trained model:
-#n_classes = 5
-
-#Since Densenet model:
 model = models.densenet121()
 model.classifier = nn.Linear(model.classifier.in_features, n_classes)
-#model = models.inception_v3()
-#model.fc = nn.Linear(model.fc.in_features, n_classes)
 #Load the checkpoints:
 print('Loading in the weights for the trained model...')
 chkpoint_path = 'output/CroppedKaggle_Densenet121_100epochs.pt'
@@ -199,8 +165,6 @@ if __name__ == "__main__":
     #Again, flatten the list
     predictions = [item.tolist() for item in predictions]
     y_true = [item.tolist() for item in y_true]
-    #print('All predicted values:')
-    #print(predictions)
     print('Number of predictions:',len(predictions))
     #Calculating performance metrics (macro = unweighted mean across all samples):
     precision, recall, fscore, support = metrics.precision_recall_fscore_support(y_true,predictions, average='macro')
@@ -221,12 +185,11 @@ if __name__ == "__main__":
     print('Support separate:',support)
     #Try to plot all predictions in one single confusion matrix:
     print(metrics.confusion_matrix(y_true, predictions))
-    #print(metrics.multilabel_confusion_matrix(y_true, predictions))
     print(metrics.classification_report(y_true, predictions))
     #For TCAV experiments:
-    #Create a df with image name, predicted class and true class:
+    #Create a df with image name, predicted class and true class for the representative test set:
     #my_df = pd.DataFrame(test_filepath)
     #my_df['Predicted class'] = predictions
     #my_df['Real class'] = y_true
-    #my_df.to_csv('TCAV_work/classificationOverviewRepresentativeTestSet.csv',index=False)
+    #my_df.to_csv('./classificationOverviewRepresentativeTestSet.csv',index=False)
 

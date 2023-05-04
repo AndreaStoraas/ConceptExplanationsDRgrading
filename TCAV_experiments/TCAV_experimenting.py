@@ -32,17 +32,17 @@ from torch.utils.data import Dataset as BaseDataset
 from captum.concept import CAV
 from captum.concept._core import tcav
 from captum._utils.av import AV
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List,Dict, cast, Optional, Tuple, Union
 from torch import Tensor
 #from sklearn.linear_model import SGDClassifier
+import json
+from collections import defaultdict
+from captum.concept._core.tcav import LabelledDataset
 
-#Device (I use GPU 0, and Vajira use 1):
-#torch.cuda.set_device(0)
-#DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+##########This code provides the mean + std TCAV scores for a given concept and DR level###########
+#Must run this code for every combination of concept and DR level (e.g. MA + DR level 1, MA + DR level 2 etc)
+#Remember to save/write down the mean and std TCAV scores for later
 
-#Can try to use both GPUs to avoid error:
-#https://pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html
-#https://stackoverflow.com/questions/54216920/how-to-use-multiple-gpus-in-pytorch 
 
 #Since the GPUs are not working well here (memory issues), I use cpu:
 DEVICE = torch.device("cpu")
@@ -63,8 +63,6 @@ def transform_val_clahe(img):
 
 
 def get_tensor_from_filename(filename):
-    #img = Image.open(filename).convert("RGB")
-    #return transform_val_fund(img)
     img = cv.imread(filename)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     return transform_val_clahe(img)
@@ -80,8 +78,6 @@ def load_image_tensors(class_name, root_path='ConceptFoldersDiaretDB/BalancedCon
     print('Number of images that are loaded:',len(filenames))
     tensors = []
     for filename in filenames:
-        #img = Image.open(filename).convert('RGB')
-        #tensors.append(transform_val_fund(img) if transform else img)
         img = cv.imread(filename)
         img = cv.cvtColor(img,cv.COLOR_BGR2RGB)
         tensors.append(transform_val_clahe(img) if transform else img)
@@ -92,6 +88,92 @@ def assemble_concept(name, id, concepts_path="ConceptFoldersDiaretDB/BalancedCon
     dataset = CustomIterableDataset(get_tensor_from_filename, concept_path)
     concept_iter = dataset_to_dataloader(dataset)
     return Concept(id=id, name=name, data_iter=concept_iter)
+
+#Want to print the accuracy of the classification models for the CAVs:
+#Modified from tcav.train_cav:
+# https://github.com/pytorch/captum/blob/master/captum/concept/_core/tcav.py
+def my_train_cav(
+    model_id,
+    concepts,
+    layers,
+    classifier,
+    save_path,
+    classifier_kwargs,
+):
+    concepts_key = concepts_to_str(concepts)
+    cavs: Dict[str, Dict[str, CAV]] = defaultdict()
+    cavs[concepts_key] = defaultdict()
+    layers = [layers] if isinstance(layers, str) else layers
+    for layer in layers:
+
+        # Create data loader to initialize the trainer.
+        datasets = [
+            AV.load(save_path, model_id, concept.identifier, layer)
+            for concept in concepts
+        ]
+
+        labels = [concept.id for concept in concepts]
+
+        labelled_dataset = LabelledDataset(cast(List[AV.AVDataset], datasets), labels)
+
+        def batch_collate(batch):
+            inputs, labels = zip(*batch)
+            return torch.cat(inputs), torch.cat(labels)
+
+        dataloader = DataLoader(labelled_dataset, collate_fn=batch_collate)
+
+        classifier_stats_dict = classifier.train_and_eval(
+            dataloader, **classifier_kwargs
+        )
+        classifier_stats_dict = (
+            {} if classifier_stats_dict is None else classifier_stats_dict
+        )
+        weights = classifier.weights()
+        assert (
+            weights is not None and len(weights) > 0
+        ), "Model weights connot be None or empty"
+
+        classes = classifier.classes()
+        assert (
+            classes is not None and len(classes) > 0
+        ), "Classes cannot be None or empty"
+
+        classes = (
+            cast(torch.Tensor, classes).detach().numpy()
+            if isinstance(classes, torch.Tensor)
+            else classes
+        )
+        cavs[concepts_key][layer] = CAV(
+            concepts,
+            layer,
+            {"weights": weights, "classes": classes, **classifier_stats_dict},
+            save_path,
+            model_id,
+        )
+        # Saving cavs on the disk
+        cavs[concepts_key][layer].save()
+        #Andrea added March 20, 2023:
+        print('Classifier stats dict:')
+        print(classifier_stats_dict)
+        accuracy_dict = {}
+        #Must convert the accuracy from tensor to a number
+        accuracy_dict['accuracy']=classifier_stats_dict['accs'].cpu().numpy().tolist()
+        #Should also save one dict for each layer:
+        last_layername = list(layer.keys())[-1]
+        if last_layername == 'denselayer16':
+            block_name = 'denseblock4'
+        elif last_layername == 'denselayer24':
+            block_name = 'denseblock3'
+        elif last_layername == 'denselayer12':
+            block_name = 'denseblock2'
+        accuracy_filename = 'Accuracies/'+model_id+ '/'+str(concepts_key)+block_name+'.txt'
+        with open(accuracy_filename,'w') as file:
+            file.write(json.dumps(accuracy_dict))
+        file.close()
+        #End Andrea code
+        
+    return cavs
+tcav.train_cav = my_train_cav
 
 #For densenet, we must define our own assemble_save_path since the layers are a bit strange
 #https://stackoverflow.com/questions/10429547/how-to-change-a-function-in-existing-3rd-party-library-in-python
@@ -124,8 +206,6 @@ def assemble_save_path(path, model_id, concepts, layer):
                     the resulting save path will be:
                         "/cavs/default_model_id/0-1-2-inception4c.pkl"
         """
-        #file_name = concepts_to_str(concepts) + "-" + layer + ".pkl"
-        #print('Layername for savepath function:',layer)
         #Replace the layer with the layer of interest for Densenet
         last_layername = list(layer.keys())[-1]
         if last_layername == 'denselayer16':
@@ -150,9 +230,6 @@ def _get_module_from_nameNew(model, layer):
     Returns:
             The module (layer) in self.model.
     """
-    #return reduce(getattr, layer_name.split("."), model)
-    #return model._modules['features']._modules['denseblock4']
-    #Try to simplify it even more:
     return layer
 tcav._get_module_from_name = _get_module_from_nameNew
 
@@ -161,7 +238,6 @@ tcav._get_module_from_name = _get_module_from_nameNew
 #Original code in captum/_utils/av.py, line 146
 #https://github.com/pytorch/captum/blob/master/captum/_utils/av.py
 @staticmethod
-#def existsNew(path,model_id,identifier,layer,num_id):
 def existsNew(
         path: str,
         model_id: str,
@@ -194,10 +270,6 @@ def existsNew(
                     not, and vice-versa.
         """
         av_dir = AV._assemble_model_dir(path, model_id)
-        layer_dir = os.path.join(av_dir,layer)
-        #print('AV dir:',av_dir)
-        #print('Layer:',layer)
-        #print('Num_id:',num_id)
         last_layername = list(identifier.keys())[-1]
         if last_layername == 'denselayer16':
             my_identifier = 'denseblock4'
@@ -205,13 +277,10 @@ def existsNew(
             my_identifier = 'denseblock3'
         elif last_layername == 'denselayer12':
             my_identifier = 'denseblock2'
-        #print('My Identifier:',my_identifier)
-        #my_identifier = None
         av_filesearch = AV._construct_file_search(
             path, model_id, my_identifier, layer, num_id
         )
         return os.path.exists(av_dir) and len(glob.glob(av_filesearch)) > 0
-        #return os.path.exists(av_dir) and os.path.exists(layer_dir)
 AV.exists = existsNew
 
 
@@ -258,10 +327,6 @@ def saveNew(
         if isinstance(act_tensors, Tensor):
             act_tensors = [act_tensors]
         #Andrea: Added some extra code here:
-        #print('Activation tensors:')
-        #print('Length:',len(act_tensors))
-        #print(act_tensors)
-        #print('Length of layers:',len(layers))
         block_names = []
         last_layername = list(layers._modules.keys())[-1]
         if last_layername == 'denselayer16':
@@ -271,14 +336,11 @@ def saveNew(
         elif last_layername == 'denselayer12':
             block_name = 'denseblock2'
         block_names.append(block_name)
-        #print('Blockname:',block_name)
-        #if len(layers) != len(act_tensors):
         if len(block_names) != len(act_tensors):
             raise ValueError("The dimension of `layers` and `act_tensors` must match!")
 
         av_dir = AV._assemble_model_dir(path, model_id)
 
-        #for i, layer in enumerate(layers):
         for i, layer in enumerate(block_names):
             av_save_fl_path = os.path.join(
                 AV._assemble_file_path(av_dir, identifier, layer), "%s.pt" % num_id
@@ -326,20 +388,14 @@ def loadNew(
         """
 
     av_save_dir = AV._assemble_model_dir(path, model_id)
-    print('Saving directory:', av_save_dir)
-    #print(layer)
     last_layername = list(layer._modules.keys())[-1]
-    #print('Last layername for loading TCAV:',last_layername)
-    #print('The identifier:',identifier)
     if last_layername == 'denselayer16':
             block_name = 'denseblock4'
     elif last_layername == 'denselayer24':
         block_name = 'denseblock3'
     elif last_layername == 'denselayer12':
         block_name = 'denseblock2'
-    #print('For loading the AV, here is corresponding block name:',block_name)
     if os.path.exists(av_save_dir):
-        #avdataset = AV.AVDataset(path, model_id, identifier, layer, num_id)
         avdataset = AV.AVDataset(path, model_id, identifier, block_name, num_id)
         return avdataset
     else:
@@ -349,25 +405,36 @@ def loadNew(
 AV.load = loadNew
 
 
-#Just give the entire image:
-NV_concept = assemble_concept("NV/PositiveExamples", 0, concepts_path="ConceptFoldersAll")
-random_0_concept = assemble_concept("NV/NegativeExamples1",1,concepts_path="ConceptFoldersAll")
-random_1_concept = assemble_concept("NV/NegativeExamples2",2,concepts_path="ConceptFoldersAll")
-random_2_concept = assemble_concept("NV/NegativeExamples3",3,concepts_path="ConceptFoldersAll")
-random_3_concept = assemble_concept("NV/NegativeExamples4",4,concepts_path="ConceptFoldersAll")
-random_4_concept = assemble_concept("NV/NegativeExamples5",5,concepts_path="ConceptFoldersAll")
-MA_concept = assemble_concept("MA/PositiveExamples", 6, concepts_path="ConceptFoldersAll")
-HE_concept = assemble_concept("HE/PositiveExamples", 7, concepts_path="ConceptFoldersAll")
-HardEx_concept = assemble_concept("HardExudates/PositiveExamples", 8, concepts_path="ConceptFoldersAll")
-SoftEx_concept = assemble_concept("SoftExudates/PositiveExamples", 9, concepts_path="ConceptFoldersAll")
-IRMA_concept = assemble_concept("irma/PositiveExamples", 10, concepts_path="ConceptFoldersAll")
+#Just give the entire image (or masked concepts):
+#Provide the path to each of the positive/negative folders for the concept we want to inspect (20 negative/random concept folders in total)
+IRMA_concept = assemble_concept("New_CompromisePureIRMA_test20/PositiveExamples", 0, concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_0_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples1",1,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_1_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples2",2,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_2_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples3",3,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_3_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples4",4,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_4_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples5",5,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_5_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples6",6,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_6_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples7",7,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_7_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples8",8,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_8_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples9",9,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_9_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples10",10,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_10_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples11",11,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_11_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples12",12,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_12_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples13",13,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_13_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples14",14,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_14_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples15",15,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_15_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples16",16,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_16_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples17",17,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_17_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples18",18,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_18_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples19",19,concepts_path="MaskingBySegmentations/MaskedConcepts")
+random_19_concept = assemble_concept("New_CompromisePureIRMA_test20/NegativeExamples20",20,concepts_path="MaskingBySegmentations/MaskedConcepts")
 
 
-random_concepts = [random_2_concept,random_3_concept,random_4_concept]
-experimental_sets = [[NV_concept, random_0_concept],[NV_concept,random_1_concept]]
-experimental_sets.extend([[NV_concept, random_concept] for random_concept in random_concepts])
-experimental_sets.append([random_0_concept,random_1_concept])
-experimental_sets.extend([[random_0_concept,random_concept] for random_concept in random_concepts])
+random_concepts = [random_2_concept,random_3_concept,random_4_concept, random_5_concept,random_6_concept,
+random_7_concept, random_8_concept,random_9_concept,random_10_concept,random_11_concept,random_12_concept, random_13_concept,random_14_concept,
+random_15_concept, random_16_concept,random_17_concept,random_18_concept,random_19_concept]
+experimental_sets = [[IRMA_concept, random_0_concept],[IRMA_concept,random_1_concept]]
+experimental_sets.extend([[IRMA_concept, random_concept] for random_concept in random_concepts])
 print('List of experimental concepts:')
 print(experimental_sets)
 
@@ -375,8 +442,6 @@ print(experimental_sets)
 #as lists of Concept objects, creating and running the TCAV:
 def assemble_scores(scores, experimental_sets, idx, score_layer, score_type):
     score_list = []
-    print('Score layer:',score_layer)
-    print('Score type:',score_type)
     for concepts in experimental_sets:
         score_list.append(scores["-".join([str(c.id) for c in concepts])][score_layer][score_type][idx])
     print('Score list:',score_list)
@@ -411,10 +476,7 @@ def get_pval(scores, experimental_sets, score_layer, score_type, alpha=0.05, pri
 model = models.densenet121()
 model.classifier = nn.Linear(model.classifier.in_features, n_classes)
 
-#model = models.inception_v3()
-#model.fc = nn.Linear(model.fc.in_features, n_classes)
 chkpoint_path = '../output/CroppedKaggle_Densenet121_100epochs.pt'
-#chkpoint_path = '../output/CroppedKaggle_InceptionV3_EarlyStopping.pt'
 chkpoint = torch.load(chkpoint_path, map_location = 'cpu')
 model.load_state_dict(chkpoint)
 
@@ -423,109 +485,56 @@ model.eval()
 
 #For Densenet, we need to access the model features to get to the conv layers
 model_features = model._modules['features']
-#When running in parallel:
-print('Hi!')
 
-#Warning when using the default classifier, since all data must be in memory at the same time
-# https://captum.ai/api/_modules/captum/concept/_utils/classifier.html
-mytcav = TCAV(model = model, layers = [model_features._modules['denseblock2'],model_features._modules['denseblock3'],model_features._modules['denseblock4']])
-#If InceptionV3:
-#mytcav = TCAV(model = model, layers = ['Mixed_6d','Mixed_6e','Mixed_7c'])
 
-#Load the cropped test images for DR level 4:
-#fgadr_imgs = load_image_tensors('4',root_path='../Data/CroppedData/CroppedTestCombinedXL', transform=False)
-#For Densenet121, only compute TCAV scores for the smaller test set due to memory issues...
-fgadr_imgs = load_image_tensors('4',root_path='./RepresentativeTestFolderKaggleCropped', transform=False)
+# NB! Remember to create a new model_id name for each time you run this code!!!
+mytcav = TCAV(model = model, layers = [model_features._modules['denseblock4']],model_id = 'Densenet_Class_1_IRMA_test20_Masked')
+
+#Only compute TCAV scores for the smaller test set due to memory issues...
+#Here, TCAV scores are calculated for the DR level 1 images:
+fgadr_imgs = load_image_tensors('1',root_path='RepresentativeTestFolderKaggleCropped', transform=False)
 fgadr_tensors = torch.stack([transform_val_clahe(img) for img in fgadr_imgs])
 
-experimental_sets = [[MA_concept,HE_concept,HardEx_concept,SoftEx_concept,IRMA_concept,NV_concept]]
-
+#Remember to change the target to the correct DR level (should match the input images)
 scores = mytcav.interpret(inputs=fgadr_tensors.to(DEVICE),
                                         experimental_sets=experimental_sets,
-                                        target=4 #The target class (DR level 4)
-                                        #n_steps=5, #This is for the LayerIntegratedGradients: steps used by the approx. method (default is 50)
+                                        target=1 #The target class (DR level 1)
                                        )
-#tcav_scores_w_random = mytcav.interpret(inputs=fgadr_tensors.to(DEVICE),
-#                                        experimental_sets=[[smallDots_concept,softEx_concept,hemo_concept,hardEx_concept]],
-#                                        target=4 #The target class (DR level 4)
-#                                        #n_steps=5, #This is for the LayerIntegratedGradients: steps used by the approx. method (default is 50)
-#                                       )
-
-print(scores)
 print('Finished with interpretation!')
-
 
 ########## Code for plotting ################
 #Boxplot for significance testing:
-n = 5
-def show_boxplots(layer,layerstring, metric='sign_count'):
-
+n=20 #Since 20 sets of positive + negative examples
+def show_boxplotsAlone(layer,layerstring, metric='sign_count'):
+    print('Analyzing:',layerstring)
     def format_label_text(experimental_sets):
         concept_id_list = [exp.name if i == 0 else \
                              exp.name.split('/')[-1][:-1] for i, exp in enumerate(experimental_sets[0])]
         return concept_id_list
 
-    n_plots = 2 #Plot NV vs negative concepts + negative vs negative
+    n_plots = 1 #Plot NV vs negative concepts + negative vs negative
 
     fig, ax = plt.subplots(1, n_plots, figsize = (25, 7 * 1))
     fs = 18
-    for i in range(n_plots):
-        esl = experimental_sets[i * n : (i+1) * n]
-        P1, P2, pval, relation = get_pval(scores, esl, layer, metric)
+    
+    esl = experimental_sets
+    #Get the mean and std for the TCAV scores:
+    P1, P2, pval, relation = get_pval(scores, esl, layer, metric,print_ret=True)
+    ax.set_ylim([0, 1])
+    #Andrea: added if/else for compatibility with densenet:
+    if len(layerstring)>1:
+        ax.set_title(layerstring + "-" + metric + " (pval=" + str(pval) + " - " + relation + ")", fontsize=fs)
+    else:
+        ax.set_title(layer + "-" + metric + " (pval=" + str(pval) + " - " + relation + ")", fontsize=fs)
+    ax.boxplot([P1, P2], showfliers=True)
 
-        ax[i].set_ylim([0, 1])
-        #Andrea: added if/else for compatibility with densenet:
-        if len(layerstring)>1:
-            ax[i].set_title(layerstring + "-" + metric + " (pval=" + str(pval) + " - " + relation + ")", fontsize=fs)
-        else:
-            ax[i].set_title(layer + "-" + metric + " (pval=" + str(pval) + " - " + relation + ")", fontsize=fs)
-        ax[i].boxplot([P1, P2], showfliers=True)
-
-        ax[i].set_xticklabels(format_label_text(esl), fontsize=fs)
-
-    #plt.show()
-    print('Saving boxplot to file:')
-    plt.savefig('NV_Denseblock4_BoxplotClass2_Densenet121_100epochsRepresentative.png', bbox_inches = 'tight')
-
+    ax.set_xticklabels(format_label_text(esl), fontsize=fs)
+    #print('Saving boxplot to file:')
+    #plt.savefig('IRMA_test20_Denseblock4_BoxplotClass1_Densenet121_100epochs.png', bbox_inches = 'tight')
 
 def format_float(f):
     return float('{:.3f}'.format(f) if abs(f) >= 0.0005 else '{:.3e}'.format(f))
 
-def plot_tcav_scores(experimental_sets, tcav_scores):
-    fig, ax = plt.subplots(1, len(experimental_sets), figsize = (25, 7))
 
-    barWidth = 1 / (len(experimental_sets[0]) + 1)
-
-    for idx_es, concepts in enumerate(experimental_sets):
-
-        concepts = experimental_sets[idx_es]
-        concepts_key = concepts_to_str(concepts)
-        pos = [np.arange(len([model_features._modules['denseblock2'],
-model_features._modules['denseblock3'],model_features._modules['denseblock4']]))]
-        #pos = [np.arange(len(['Mixed_6d','Mixed_6e','Mixed_7c']))]
-        for i in range(1, len(concepts)):
-            pos.append([(x + barWidth) for x in pos[i-1]])
-        _ax = (ax[idx_es] if len(experimental_sets) > 1 else ax)
-        for i in range(len(concepts)):
-            val = [format_float(scores['sign_count'][i]) for layer, scores in tcav_scores[concepts_key].items()]
-            _ax.bar(pos[i], val, width=barWidth, edgecolor='white', label=concepts[i].name)
-
-        # Add xticks on the middle of the group bars
-        _ax.set_xlabel('Set {}'.format(str(idx_es)), fontweight='bold', fontsize=16)
-        _ax.set_xticks([r + 0.3 * barWidth for r in range(len([model_features._modules['denseblock2'],
-model_features._modules['denseblock3'],model_features._modules['denseblock4']]))])
-        #_ax.set_xticks([r + 0.3 * barWidth for r in range(len(['Mixed_6d','Mixed_6e','Mixed_7c']))])
-        _ax.set_xticklabels(['denseblock2','denseblock3','denseblock4'], fontsize=16, rotation = 45)
-
-        # Create legend & Show graphic
-        _ax.legend(fontsize=16)
-
-    print('Saving concept plot to file:')
-    plt.savefig('CompareAllConceptClass4_Densenet121_100epochs_positivesRepresentative.png', bbox_inches = 'tight')
-#Plot TCAV scores for the experimental set:
-#plot_tcav_scores(experimental_sets[:5], scores)
-plot_tcav_scores(experimental_sets, scores)
-
-#Plot the boxplot for layer Mixed_7c:
-#show_boxplots(layer='Mixed_7c',layerstring='')
-#show_boxplots(layer = model_features._modules['denseblock4'],layerstring = 'denseblock4')
+#Get the mean and std TCAV scores printed:
+show_boxplotsAlone(layer = model_features._modules['denseblock4'],layerstring = 'denseblock4')

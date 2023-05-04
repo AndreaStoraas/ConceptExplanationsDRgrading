@@ -7,7 +7,8 @@ import pandas as pd
 import random
 
 #This code picks 50 representative test images for each of the DR classes 0 to 4
-#Should include Kaggle cropped images from all four sub-parts of the test set:
+# Because of memory limitations when calculating the TCAV scores
+# The representative test set should include Kaggle cropped images from all four sub-parts of the test set:
 #DR Detection, APTOS, Messidor and FGADR
 random.seed(42)
 representative_TestFolderPath = './RepresentativeTestFolderKaggleCropped'
@@ -59,19 +60,19 @@ selected_images_FGADR4 = random.sample(image_list_FGADR4,num_images_FGADR_class4
 for _image in selected_images_DRDetection4:
     source_path = os.path.join(class_4_DRDetection,_image)
     target_path = os.path.join(target_folder_class4,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_APTOS4:
     source_path = os.path.join(class_4_APTOS,_image)
     target_path = os.path.join(target_folder_class4,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_Messidor4:
     source_path = os.path.join(class_4_Messidor,_image)
     target_path = os.path.join(target_folder_class4,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_FGADR4:
     source_path = os.path.join(class_4_FGADR,_image)
     target_path = os.path.join(target_folder_class4,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 print('Number of images in class for representative test folder:',len(os.listdir(target_folder_class4)))
 #Repeat for class 3, 2, 1 and 0
 #Class 3
@@ -119,19 +120,19 @@ selected_images_FGADR3 = random.sample(image_list_FGADR3,num_images_FGADR_class3
 for _image in selected_images_DRDetection3:
     source_path = os.path.join(class_3_DRDetection,_image)
     target_path = os.path.join(target_folder_class3,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_APTOS3:
     source_path = os.path.join(class_3_APTOS,_image)
     target_path = os.path.join(target_folder_class3,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_Messidor3:
     source_path = os.path.join(class_3_Messidor,_image)
     target_path = os.path.join(target_folder_class3,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_FGADR3:
     source_path = os.path.join(class_3_FGADR,_image)
     target_path = os.path.join(target_folder_class3,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 print('Number of class 3 images in representative folder:',len(os.listdir(target_folder_class3)))
 #Class 2:
 target_folder_class2 = os.path.join(representative_TestFolderPath,'2')
@@ -172,19 +173,19 @@ selected_images_FGADR2 = random.sample(image_list_FGADR2,num_images_FGADR_class2
 for _image in selected_images_DRDetection2:
     source_path = os.path.join(class_2_DRDetection,_image)
     target_path = os.path.join(target_folder_class2,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_APTOS2:
     source_path = os.path.join(class_2_APTOS,_image)
     target_path = os.path.join(target_folder_class2,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_Messidor2:
     source_path = os.path.join(class_2_Messidor,_image)
     target_path = os.path.join(target_folder_class2,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_FGADR2:
     source_path = os.path.join(class_2_FGADR,_image)
     target_path = os.path.join(target_folder_class2,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 print('Number of class 2 images in representative test folder:',len(os.listdir(target_folder_class2)))
 #Class 1:
 target_folder_class1 = os.path.join(representative_TestFolderPath,'1')
@@ -225,19 +226,19 @@ selected_images_FGADR1 = random.sample(image_list_FGADR1,num_images_FGADR_class1
 for _image in selected_images_DRDetection1:
     source_path = os.path.join(class_1_DRDetection,_image)
     target_path = os.path.join(target_folder_class1,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_APTOS1:
     source_path = os.path.join(class_1_APTOS,_image)
     target_path = os.path.join(target_folder_class1,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_Messidor1:
     source_path = os.path.join(class_1_Messidor,_image)
     target_path = os.path.join(target_folder_class1,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_FGADR1:
     source_path = os.path.join(class_1_FGADR,_image)
     target_path = os.path.join(target_folder_class1,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 print('Number of class 1 images in representative test folder:',len(os.listdir(target_folder_class1)))
 #For class 0:
 target_folder_class0 = os.path.join(representative_TestFolderPath,'0')
@@ -280,101 +281,16 @@ selected_images_FGADR0 = random.sample(image_list_FGADR0,num_images_FGADR_class0
 for _image in selected_images_DRDetection0:
     source_path = os.path.join(class_0_DRDetection,_image)
     target_path = os.path.join(target_folder_class0,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_APTOS0:
     source_path = os.path.join(class_0_APTOS,_image)
     target_path = os.path.join(target_folder_class0,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_Messidor0:
     source_path = os.path.join(class_0_Messidor,_image)
     target_path = os.path.join(target_folder_class0,_image)
-    #shutil.copy(source_path,target_path)
+    shutil.copy(source_path,target_path)
 for _image in selected_images_FGADR0:
     source_path = os.path.join(class_0_FGADR,_image)
     target_path = os.path.join(target_folder_class0,_image)
-    #shutil.copy(source_path,target_path)
-
-#print('Number of class 0 images in representative test folder:',len(os.listdir(target_folder_class0)))
-
-#Want to pick 50 images from each class from the DR Detection dataset
-#Since the model performs best on this part of the dataset
-target_test = './RepresentativeDRDetectionFolderKaggleCropped'
-selected_images_test0 = random.sample(image_list_DRDetection0,50)
-selected_images_test1 = random.sample(image_list_DRDetection1,50)
-selected_images_test2 = random.sample(image_list_DRDetection2,50)
-selected_images_test3 = random.sample(image_list_DRDetection3,50)
-selected_images_test4 = random.sample(image_list_DRDetection4,50)
-
-for _image in selected_images_test0:
-    source_path = os.path.join(class_0_DRDetection,_image)
-    target_path = os.path.join(target_test,'0',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test1:
-    source_path = os.path.join(class_1_DRDetection,_image)
-    target_path = os.path.join(target_test,'1',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test2:
-    source_path = os.path.join(class_2_DRDetection,_image)
-    target_path = os.path.join(target_test,'2',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test3:
-    source_path = os.path.join(class_3_DRDetection,_image)
-    target_path = os.path.join(target_test,'3',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test4:
-    source_path = os.path.join(class_4_DRDetection,_image)
-    target_path = os.path.join(target_test,'4',_image)
-    #shutil.copy(source_path,target_path)
-
-#Repeat for the FGADR dataset, since this is the dataset for the IRMA and NV concepts:
-#Want 50 images from each class if possible,
-#BUT if less than 50 images, we take all images from that class
-target_testFGADR = './RepresentativeFGADRFolderKaggleCropped'
-if len(image_list_FGADR0)>=50:
-    selected_images_test0 = random.sample(image_list_FGADR0,50)
-else:
-    selected_images_test0 = image_list_FGADR0
-if len(image_list_FGADR1)>=50:
-    selected_images_test1 = random.sample(image_list_FGADR1,50)
-else:
-    selected_images_test1 = image_list_FGADR1
-if len(image_list_FGADR2)>=50:
-    selected_images_test2 = random.sample(image_list_FGADR2,50)
-else:
-    selected_images_test2 = image_list_FGADR2
-if len(image_list_FGADR3)>=50:
-    selected_images_test3 = random.sample(image_list_FGADR3,50)
-else:
-    selected_images_test3 = image_list_FGADR3
-if len(image_list_FGADR4)>=50:
-    selected_images_test4 = random.sample(image_list_FGADR4,50)
-else:
-    selected_images_test4 = image_list_FGADR4
-
-for _image in selected_images_test0:
-    source_path = os.path.join(class_0_FGADR,_image)
-    target_path = os.path.join(target_testFGADR,'0',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test1:
-    source_path = os.path.join(class_1_FGADR,_image)
-    target_path = os.path.join(target_testFGADR,'1',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test2:
-    source_path = os.path.join(class_2_FGADR,_image)
-    target_path = os.path.join(target_testFGADR,'2',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test3:
-    source_path = os.path.join(class_3_FGADR,_image)
-    target_path = os.path.join(target_testFGADR,'3',_image)
-    #shutil.copy(source_path,target_path)
-for _image in selected_images_test4:
-    source_path = os.path.join(class_4_FGADR,_image)
-    target_path = os.path.join(target_testFGADR,'4',_image)
-    #shutil.copy(source_path,target_path)
-
-print('***********************************')
-print('Number of images in FGADR set class 0:',len(os.listdir(os.path.join(target_testFGADR,'0'))))
-print('Number of images in FGADR set class 1:',len(os.listdir(os.path.join(target_testFGADR,'1'))))
-print('Number of images in FGADR set class 2:',len(os.listdir(os.path.join(target_testFGADR,'2'))))
-print('Number of images in FGADR set class 3:',len(os.listdir(os.path.join(target_testFGADR,'3'))))
-print('Number of images in FGADR set class 4:',len(os.listdir(os.path.join(target_testFGADR,'4'))))
+    shutil.copy(source_path,target_path)

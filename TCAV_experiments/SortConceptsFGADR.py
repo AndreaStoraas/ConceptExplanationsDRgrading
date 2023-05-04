@@ -5,25 +5,12 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 
-#Want to have 5 concepts here:
-#MA, HE, HardEx, SoftEx, and NV
+#Want to have 6 concepts here:
+#MA, HE, HardEx, SoftEx, IRMA and NV
 fgadr_folder = '../Data/FGADR-Seg-set'
 abnormality_list = ['HardExudate_Masks','Hemohedge_Masks','IRMA_Masks','Microaneurysms_Masks',
     'Neovascularization_Masks','SoftExudate_Masks']
-'''
-for anorm in abnormality_list:
-    print('Looking at abnormality',anorm)
-    anorm_masks = os.listdir(os.path.join(fgadr_folder,anorm))
-    print('Number of masks in the folder:',len(anorm_masks))
-    empty_counter = 0
-    for _mask in anorm_masks:
-        my_mask = cv.imread(os.path.join(fgadr_folder,anorm,_mask))
-        #If the mask is completely black, the abnormality is not present for that image:
-        if (len(np.unique(my_mask))==1) and (np.unique(my_mask)[0]==0):
-            empty_counter += 1
-            #print('No abnormalities in this mask')
-    print('Number of masks without the abnormality:',empty_counter)
-'''
+
 def createOverviewDf():
     overview_df = pd.DataFrame(columns = ['image_name', 'Microaneurysms','Hemohedge','SoftExudate','HardExudate','Neovascularization','IRMA'])
     #Should create an overview DF to see which abnormalities that are present for each image
@@ -33,7 +20,6 @@ def createOverviewDf():
         overview_df.loc[i] = _img, 'lol','lol','lol','lol','lol','lol'
         for anorm in abnormality_list:
             anorm_name = anorm[:-6]
-            #print('Name of anormality column:',anorm_name)
             #First, check if the image is present in the abnormality folder:
             anorm_images = os.listdir(os.path.join(fgadr_folder,anorm))
             #If the image is present, we check if the corresponding mask has segmentations:
@@ -50,16 +36,14 @@ def createOverviewDf():
             #If the image is not present in the abnormality folder, then the abnormality is not present:
             else:
                 overview_df.loc[i,anorm_name] = 0
-    print(overview_df.head())
-    print('Shape of the DF:',overview_df.shape)
+
     #Save the df as csv:
     overview_df.to_csv('ConceptFoldersFGADR/file_overviewAbnormalities.csv',index = False)
 
-#createOverviewDf()
 overview_df = pd.read_csv('ConceptFoldersFGADR/file_overviewAbnormalities.csv')
 print(overview_df.head())
 #Want to create subfolders based on which combinations of anormalities that are present
-#Start with the "single" concepts
+#Start with the "single" concept combinations
 def pickSingleAbnormalities():
     noAnorm_count = 0
     MA_count = 0
@@ -75,38 +59,38 @@ def pickSingleAbnormalities():
         #If no abnormalities:
         if (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'NoAbnormalities')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             noAnorm_count +=1
         #If only MA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_count += 1
         #If only Hemo
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HE')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             Hemo_count += 1
         #If only SoftEx:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'SoftEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_count += 1
         #If only HardEx:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HardEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HardEx_count +=1
         #If only NV:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             NV_count += 1
         #If only IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             #No IRMA, so I don't need to move the images
             target_path = os.path.join(target_folder,'IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             IRMA_count += 1
     print('No abnormalities:',noAnorm_count)
     print('MA images:',MA_count)
@@ -123,6 +107,7 @@ def pickSingleAbnormalities():
     print('Number of images in HardEx concept folder:',len(os.listdir(os.path.join(target_folder,'HardEx'))))
     print('Number of images in NV concept folder:',len(os.listdir(os.path.join(target_folder,'NV'))))
 
+#Sort the all the combinations of two concepts:
 def pickDoubleAbnormalities():
     MA_HE_count = 0
     MA_SoftEx_count = 0
@@ -251,6 +236,7 @@ def pickDoubleAbnormalities():
     print('Number of images in HardEx + NV concept folder:',len(os.listdir(os.path.join(target_folder,'HardEx_NV'))))
     print('Number of images in HardEx + IRMA concept folder:',len(os.listdir(os.path.join(target_folder,'HardEx_IRMA'))))
 
+#Sort the all the unique combinations of three concepts:
 def pickTripleAbnormalities():
     MA_HE_SoftEx_count = 0
     MA_HE_HardEx_count = 0
@@ -279,7 +265,7 @@ def pickTripleAbnormalities():
         #If MA + HE + SoftEx:
         if (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_count +=1
         #If MA + HE + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
@@ -289,92 +275,92 @@ def pickTripleAbnormalities():
         #If MA + HE + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HE_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_NV_count += 1
         #If MA + HE + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HE_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_IRMA_count += 1
         #If MA + SoftEx + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_SoftEx_HardEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_HardEx_count +=1
         #If MA + SoftEx + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_SoftEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_NV_count += 1
         #If MA + SoftEx + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_SoftEx_IRMA')
-           #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_IRMA_count += 1
         #If MA + HardEx + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HardEx_NV_count +=1
         #If MA + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HardEx_IRMA_count +=1
         #If MA + NV + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_NV_IRMA_count +=1
         #If HE + NV + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_NV_IRMA_count +=1
         #If HE + SoftEx + HardEx:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HE_SoftEx_HardEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_HardEx_count +=1
         #If HE + SoftEx + NV:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HE_SoftEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_NV_count +=1
         #If HE + SoftEx + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_SoftEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_IRMA_count +=1
         #If HE + HardEx + NV:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HE_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_HardEx_NV_count +=1
         #If HE + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_HardEx_IRMA_count +=1
         #If SoftEx + HardEx + NV
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'SoftEx_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_HardEx_NV_count +=1
         #If SoftEx + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'SoftEx_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_HardEx_IRMA_count +=1
         #If HardEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HardEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HardEx_NV_IRMA_count +=1
         #If SoftEx + NV + IRMA
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'SoftEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_NV_IRMA_count +=1
 
     print('MA + HE + SoftEx:',MA_HE_SoftEx_count)
@@ -407,7 +393,8 @@ def pickTripleAbnormalities():
     print('Number of images in HE + SoftEx + NV concept folder:',len(os.listdir(os.path.join(target_folder,'HE_SoftEx_NV'))))
     print('Number of images in HE + SoftEx + IRMA concept folder:',len(os.listdir(os.path.join(target_folder,'HE_SoftEx_IRMA'))))
     print('Number of images in no HE + HardEx + IRMA folder:',len(os.listdir(os.path.join(target_folder,'HE_HardEx_IRMA'))))
-    
+
+#Sort the all the unique combinations of four concepts:    
 def pickFourAbnormalities():
     MA_HE_SoftEx_HardEx_count = 0
     MA_HE_SoftEx_NV_count = 0
@@ -431,77 +418,77 @@ def pickFourAbnormalities():
         #If MA + HE + SoftEx + HardEx:
         if (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx_HardEx')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_HardEx_count +=1
         #If MA + HE + SoftEx + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_NV_count += 1
         #If MA + HE + SoftEx + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HE_SoftEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_SoftEx_IRMA_count += 1
         #If MA + HE + HardEx + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_HE_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_HardEx_NV_count += 1
         #If MA + HE + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HE_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_HardEx_IRMA_count +=1
         #If MA + HE + NV + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HE_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HE_NV_IRMA_count += 1
         #If MA + SoftEx + HardEx + NV:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'MA_SoftEx_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_HardEx_NV_count += 1
         #If MA + SoftEx + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_SoftEx_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_HardEx_IRMA_count +=1
         #If MA + SoftEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_SoftEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_SoftEx_NV_IRMA_count +=1
         #If MA + HardEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'MA_HardEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             MA_HardEx_NV_IRMA_count +=1
         #If HE + SoftEx + HardEx + NV:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==0):
             target_path = os.path.join(target_folder,'HE_SoftEx_HardEx_NV')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_HardEx_NV_count +=1
         #If HE + SoftEx + HardEx + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==0) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_SoftEx_HardEx_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_HardEx_IRMA_count +=1
         #If HE + SoftEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_SoftEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_SoftEx_NV_IRMA_count +=1
         #If HE + HardEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'HE_HardEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             HE_HardEx_NV_IRMA_count +=1
         #If SoftEx + HardEx + NV + IRMA:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1) and (overview_df.iloc[i,5]==1) and (overview_df.iloc[i,6]==1):
             target_path = os.path.join(target_folder,'SoftEx_HardEx_NV_IRMA')
-            #shutil.copy(source_path,target_path)
+            shutil.copy(source_path,target_path)
             SoftEx_HardEx_NV_IRMA_count +=1
         
     print('MA + HE + SoftEx + HardEx:',MA_HE_SoftEx_HardEx_count)
@@ -532,6 +519,7 @@ def pickFourAbnormalities():
     print('Number of images in HE + SoftEx + HardEx + NV concept folder:',len(os.listdir(os.path.join(target_folder,'HE_SoftEx_HardEx_NV'))))
     print('Number of images in HE + SoftEx + HardEx + IRMA concept folder:',len(os.listdir(os.path.join(target_folder,'HE_SoftEx_HardEx_IRMA'))))
 
+#Sort the all the combinations of five concepts + all six concepts together:
 def pickFiveAllAbnormalities():
     all_count = 0
     MA_HE_SoftEx_HardEx_NV_count = 0
@@ -596,19 +584,14 @@ def pickFiveAllAbnormalities():
     print('Number of images in MA + HE +  HardEx + NV + IRMA abnorm concept folder:',len(os.listdir(os.path.join(target_folder,'MA_HE_HardEx_NV_IRMA'))))
     
 
+#Uncomment code below to
+# 1. Create the overview DF of concept presence
+#createOverviewDf()
+
+# 2. Sort the images based on which combinations of concepts that are present:
+# Split the functions into combinations consisting of one, two, three, four and five+all concepts:
 #pickSingleAbnormalities()
 #pickDoubleAbnormalities()
 #pickTripleAbnormalities()
 #pickFourAbnormalities()
 #pickFiveAllAbnormalities()
-combo_folders = os.listdir('ConceptFoldersFGADR/SortedByCombinations')
-
-total_images = 0
-for combo in combo_folders:
-    #print('Looking at folder:', combo)
-    num_images = len(os.listdir(os.path.join('ConceptFoldersFGADR/SortedByCombinations',combo)))
-    #print('Number of images in folder:',num_images)
-    total_images += num_images
-
-print('Total number of sorted images:',total_images)
-print('Total number of original images:', len(os.listdir(os.path.join(fgadr_folder,'Original_Images'))))

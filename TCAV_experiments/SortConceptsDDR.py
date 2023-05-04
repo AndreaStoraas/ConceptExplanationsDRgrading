@@ -33,13 +33,8 @@ def create_overviewDf():
         _file = train_masks[i]
         overview_dfTrain.loc[i] = _file, 'lol','lol','lol','lol'
         for abnorm in abnormalities:
-            #print('Inspecting abnormality',abnorm)
             mask_path = os.path.join(ddr_train,abnorm,_file)
-            #print(mask_path)
             my_mask = cv.imread(mask_path)
-            #print(np.unique(my_mask[:,:,0]))
-            #print(np.unique(my_mask[:,:,1]))
-            #print(np.unique(my_mask[:,:,2]))
             #If segmentation mask is completely black, the abnormality is not present
             if (len(np.unique(my_mask))==1) and (np.unique(my_mask)[0]==0):
                 #print('No abnormality in segmentation mask')
@@ -58,7 +53,6 @@ def create_overviewDf():
             my_mask = cv.imread(mask_path)
             #If segmentation mask is completely black, the abnormality is not present
             if (len(np.unique(my_mask))==1) and (np.unique(my_mask)[0]==0):
-                #print('No abnormality in segmentation mask')
                 overview_dfValid.loc[i,abnorm] = 0
             else:
                 overview_dfValid.loc[i,abnorm] = 1
@@ -74,7 +68,6 @@ def create_overviewDf():
             my_mask = cv.imread(mask_path)
             #If segmentation mask is completely black, the abnormality is not present
             if (len(np.unique(my_mask))==1) and (np.unique(my_mask)[0]==0):
-                #print('No abnormality in segmentation mask')
                 overview_dfTest.loc[i,abnorm] = 0
             else:
                 overview_dfTest.loc[i,abnorm] = 1
@@ -125,82 +118,78 @@ def sortByCombinations():
             print('No abnormalities')
         #If only hard exudates:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0):
-            #print(overview_df.iloc[i,:])
             target_path = os.path.join(sorted_folder,'HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ex_counter += 1
         #If only hemorrhages:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'HE',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             he_counter += 1
         #If only microaneurysms:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'MA',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_counter += 1
         #If only soft exudates:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'SoftEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             se_counter += 1
-            #print('Corresponding filename:',image_name)
-            #print('Source path:',source_pathImage)
-            #print('Saving path:',target_path)
         #If MA + HE:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'MA_HE',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_he_counter +=1
         #If MA + SoftEx:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'MA_SoftEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_se_counter +=1
         #If MA + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'MA_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_ex_counter += 1
         #If HE + Soft Ex
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'HE_SoftEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             he_se_counter += 1
         #If HE + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'HE_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             he_ex_counter +=1
         #If SoftEx + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'SoftEx_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             se_ex_counter += 1
         #If MA + HE + HardEx:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==0):
             target_path = os.path.join(sorted_folder,'MA_HE_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_he_ex_counter += 1
         #If MA + HE + SoftEx:
         elif (overview_df.iloc[i,1]==0) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'MA_HE_SoftEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_he_se_counter +=1
         #IF MA + SoftEx + HardEx
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==0) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'MA_SoftEx_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_se_ex_counter += 1
         #If HE + SoftEx + HardEx
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==0) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'HE_SoftEx_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             he_se_ex_counter +=1
         #If all 4 are present:
         elif (overview_df.iloc[i,1]==1) and (overview_df.iloc[i,2]==1) and (overview_df.iloc[i,3]==1) and (overview_df.iloc[i,4]==1):
             target_path = os.path.join(sorted_folder,'MA_HE_SoftEx_HardEx',image_name)
-            #shutil.copy(source_pathImage,target_path)
+            shutil.copy(source_pathImage,target_path)
             ma_he_se_ex_counter+=1
         else:
             print('This is not covered by the filters:')
@@ -233,20 +222,8 @@ def sortByCombinations():
 
     for _folder in target_foldersList:
         print('Number of files in folder',_folder,len(os.listdir(os.path.join('ConceptFoldersDDR/SortedByCombinations',_folder))))
-'''
-concept_folder = 'ConceptFoldersDiaretDB/SortedByCombinationsDB1'
-total_images = 0
-combi_list = os.listdir(concept_folder)
-for _combi in combi_list:
-    print('Looking at concept combination:',_combi)
-    if _combi != 'NoAbnormalities':
-        print('Number of images:',len(os.listdir(os.path.join(concept_folder,_combi))))
-        total_images += len(os.listdir(os.path.join(concept_folder,_combi)))
-    else:
-        print('Number of noDR images:',len(os.listdir(os.path.join(concept_folder,_combi))))
-print('Total number of sorted images:', total_images)
-'''
-'''
+
+
 #Move all class 0 images over to the NoAbnormalities folder
 ddr_gradingFolder = '../Data/DDR-datasetFebruary/DR_grading'
 ddr_gradingTrain = pd.read_table(os.path.join(ddr_gradingFolder,'train.txt'),sep=' ', header = None)
@@ -272,7 +249,7 @@ for i in range(ddr_gradingTrain.shape[0]):
     if ddr_gradingTrain.iloc[i,1]==0:
         source_path = os.path.join(ddr_trainImages,image_name)
         target_path = os.path.join(noAbnormalityFolder,image_name)
-        #shutil.copy(source_path,target_path)
+        shutil.copy(source_path,target_path)
         noAbnorm_counter+=1
 #Continue with the valid and test images:
 for i in range(ddr_gradingValid.shape[0]):
@@ -280,28 +257,21 @@ for i in range(ddr_gradingValid.shape[0]):
     if ddr_gradingValid.iloc[i,1]==0:
         source_path = os.path.join(ddr_validImages,image_name)
         target_path = os.path.join(noAbnormalityFolder,image_name)
-        #shutil.copy(source_path,target_path)
+        shutil.copy(source_path,target_path)
         noAbnorm_counter+=1
 for i in range(ddr_gradingTest.shape[0]):
     image_name = ddr_gradingTest.iloc[i,0]
     if ddr_gradingTest.iloc[i,1]==0:
         source_path = os.path.join(ddr_testImages,image_name)
         target_path = os.path.join(noAbnormalityFolder,image_name)
-        #shutil.copy(source_path,target_path)
+        shutil.copy(source_path,target_path)
         noAbnorm_counter+=1
 print('Number of healthy images in the dataset:',noAbnorm_counter)
 print('Number of healthy images in NoAbnormality folder:',len(os.listdir(noAbnormalityFolder)))
-'''
 
-overview_df = pd.read_csv('ConceptFoldersDDR/file_overviewAbnormalities.csv')
-no_abnorm = 0
-for i in range(overview_df.shape[0]):
-    if (overview_df.iloc[i,1] == 0) and (overview_df.iloc[i,2] == 0) and (overview_df.iloc[i,3] == 0) and (overview_df.iloc[i,4] == 0):
-        no_abnorm += 1
-#print('Number of healthy images in overview df:',no_abnorm)
-#print('Number of sorted healthy images:',len(os.listdir('ConceptFoldersIDRiD/SortedByCombinations/NoAbnormalities')))
-#print('Number of concept images:',len(os.listdir('ConceptFoldersIDRiD/SortedByCombinations/MA_HardEx'))+len(os.listdir('ConceptFoldersIDRiD/SortedByCombinations/MA_HE_HardEx'))+len(os.listdir('ConceptFoldersIDRiD/SortedByCombinations/MA_HE_SoftEx_HardEx')))
+#Uncomment to
+# 1. Create the concept overview DF 
+#create_overviewDf()
 
-print('Concept train DDR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTrainDDR')))
-print('Concept valid DDR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedValidDDR')))
-print('Concept test DDR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestDDR')))
+# 2.sort the concepts into their respective folders:
+#sortByCombinations()

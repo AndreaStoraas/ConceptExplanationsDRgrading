@@ -4,14 +4,15 @@ import shutil
 import os
 import random
 
-labelFolderName = 'aptos2019-blindness-detection'
-imageFolderName = 'aptos2019-blindness-detection/train_images'
+#############Code for sorting the APTOS 2019 dataset################
+
+labelFolder = '../Data/aptos2019-blindness-detection'
+imageFolder = '../Data/aptos2019-blindness-detection/train_images'
 #Read in the datalabels and ids:
-#label_data = pd.read_csv(os.path.join(labelFolderName,'train.csv'))
-#print(label_data.head(20))
-#print('Distribution of the diagnoses:')
-#print(label_data['diagnosis'].value_counts())
-#print('Number of images:',label_data.shape)
+label_data = pd.read_csv(os.path.join(labelFolder,'train.csv'))
+print('Distribution of the diagnoses:')
+print(label_data['diagnosis'].value_counts())
+print('Number of images:',label_data.shape)
 
 #Want to move images into correct folders according to DR diagnose
 #id_code in the csv file = filename for corresponding image
@@ -35,52 +36,12 @@ def sortRawdata():
         print('Name of file:',filename)
         print('Corresponding diagnose:',diagnoseName)
         #Get the file
-        sourcepath = os.path.join(imageFolderName,filename)
-        targetpath = os.path.join(diagnoseName,filename)
+        sourcepath = os.path.join(imageFolder,filename)
+        targetpath = os.path.join('../Data/aptos2019-blindness-detection/',diagnoseName,filename)
         #Copy the images over to respective class folders
         shutil.copy(sourcepath,targetpath)
 
 classFolders = ['noDR','Mild','Moderate','Severe','Proliferative']
-#classFolders = ['noDR']
-def splitTrainVal():
-    for _class in classFolders:
-        folderPath = os.path.join('./',_class)
-        #list all files in folder:
-        classFiles = os.listdir(folderPath)
-        #For now: only select 100 from each class!
-        classFiles = classFiles[:100]
-        #Select 80% for training and 20% for validation
-        num_train = int(len(classFiles)*0.8)
-        print('Looking at DR class:',_class)
-        print('Number of images in class:',len(classFiles))
-        print('Number of images for training:',num_train)
-        #Pick 80% randomly from the list
-        #Convert to set for easier substraction
-        trainFiles = set(random.sample(classFiles,num_train))
-        validFiles = set(classFiles) - trainFiles
-        #Convert back to list again:
-        trainFiles = list(trainFiles)
-        validFiles = list(validFiles)
-        print(len(trainFiles))
-        print(len(validFiles))
-        #Check that no duplicates in the train and validation files:
-        for tFile in trainFiles:
-            if tFile in validFiles:
-                print('Same image in valid and training list! Something went wrong here!')
-        #Move training files to Train
-        for tFile in trainFiles:
-            sourceFile = os.path.join(folderPath,tFile)
-            targetPath = os.path.join('Train',_class,tFile)
-            shutil.copy(sourceFile,targetPath)
-
-        #Move validation files to Valid
-        for vFile in validFiles:
-            sourceFile = os.path.join(folderPath,vFile)
-            targetPath = os.path.join('Valid',_class,vFile)
-            shutil.copy(sourceFile,targetPath)
-
-
-
 def splitTrainValTest():
     for _class in classFolders:
         #Convert class to number for pytorch classifier to understand:
@@ -97,7 +58,7 @@ def splitTrainValTest():
         else:
             print('Something is wrong with the class name!!!')
         #Get the correct folder, matching with the class:
-        folderPath = os.path.join('./Data/APTOS2019',_class)
+        folderPath = os.path.join('../Data/aptos2019-blindness-detection',_class)
         #list all files in folder:
         classFiles = os.listdir(folderPath)
         #Select 80% for training, 10% for validation, 10% for testing
@@ -134,7 +95,7 @@ def splitTrainValTest():
         #Move training files to Train
         for tFile in trainFiles:
             sourceFile = os.path.join(folderPath,tFile)
-            targetPath = os.path.join('Data/TrainAPTOS',classInt,tFile)
+            targetPath = os.path.join('../Data/TrainAPTOS',classInt,tFile)
             shutil.copy(sourceFile,targetPath)
         #Check that no duplicates in validation and test files:
         for vFile in validFiles:
@@ -143,24 +104,25 @@ def splitTrainValTest():
         #Move validation files to Valid
         for vFile in validFiles:
             sourceFile = os.path.join(folderPath,vFile)
-            targetPath = os.path.join('Data/ValidAPTOS',classInt,vFile)
+            targetPath = os.path.join('../Data/ValidAPTOS',classInt,vFile)
             shutil.copy(sourceFile,targetPath)
         #Move test files to Test
         for testFile in testFiles:
             sourceFile = os.path.join(folderPath,testFile)
-            targetPath = os.path.join('Data/TestAPTOS',classInt,testFile)
+            targetPath = os.path.join('../Data/TestAPTOS',classInt,testFile)
             shutil.copy(sourceFile,targetPath)
 
 
+#Uncomment to
+# 1. Sort the data into DR severity folders:
 #sortRawdata()
-#splitTrainVal()
 
-#Split into 80% train, 10% valid, 10% testing:
+# 2. Split into 80% train, 10% valid, 10% testing:
 #splitTrainValTest()
 
 
 #Check that correct number of images for each class:
 #for _class in classFolders:
-    #classFiles = os.listdir(os.path.join('Data/APTOS2019',_class))
+    #classFiles = os.listdir(os.path.join('Data/aptos2019-blindness-detection',_class))
     #print('Name of class:',_class)
     #print('Number of images:',len(classFiles))

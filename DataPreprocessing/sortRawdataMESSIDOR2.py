@@ -6,12 +6,13 @@ import random
 
 from sklearn.model_selection import GroupShuffleSplit
 
+#############Code for sorting the MESSIDOR-2 dataset################
 
-image_folder = 'Data/MESSIDOR2/IMAGES'
-paired_images = pd.read_csv('Data/MESSIDOR2/messidor-2.csv', sep=';')
+image_folder = '../Data/MESSIDOR2/IMAGES'
+paired_images = pd.read_csv('../Data/MESSIDOR2/messidor-2.csv', sep=';')
 #The annotations are from Google Brain's Kaggle page:
 #https://www.kaggle.com/datasets/google-brain/messidor2-dr-grades?select=messidorData.csv
-image_annotations = pd.read_csv('Data/MESSIDOR2/messidor_data.csv')
+image_annotations = pd.read_csv('../Data/MESSIDOR2/messidor_data.csv')
 
 print('Number of images in dataset:',len(os.listdir(image_folder)))
 print('Number of image pairs, i.e. patients',paired_images.shape)
@@ -25,8 +26,6 @@ for i in range(paired_images.shape[0]):
     image_nameLeft = paired_images.iloc[i,0]
     overviewDf.loc[i] = i, image_nameLeft, 'left'
 
-#print('Number of observations in overviewDF:',overviewDf.shape[0])
-#print(overviewDf.head(10))
 #Also go through the right-eye column and use the same patient ID as row-number for the paired Df
 #-> Same patient ID for left and right eye
 for i in range(paired_images.shape[0]):
@@ -35,7 +34,6 @@ for i in range(paired_images.shape[0]):
     image_nameRight = paired_images.iloc[i,-1]
     overviewDf.loc[row_number] = i, image_nameRight, 'right'
 print('Number of observations in overviewDF:',overviewDf.shape[0])
-#print(overviewDf.iloc[874:884,:])
 
 #Next, we want to find the images that are annotated on Kaggle:
 annotated_images = []
@@ -56,11 +54,11 @@ for i in range(overviewDf.shape[0]):
         not_annotated.append(drop_image)
         
 print('Number of not annotated images:',len(not_annotated))
+#Remove the not annotated images from the overview DF:
 for _img in not_annotated:
     overviewDf = overviewDf[overviewDf['ImageName']!=_img]
 print('New number of observations in our overviewDf:',overviewDf.shape[0])
 
-print(image_annotations.iloc[:5,:3])
 #Join the overview Df and the DR annotations from the annotated
 #images:
 overviewDf['DR-grade']='Lol'
@@ -75,20 +73,10 @@ for j in range(overviewDf.shape[0]):
     grading = corresponding_row['adjudicated_dr_grade'].values[0]
     #Set the grading as the new value for the DR-grade column:
     overviewDf.iloc[j,-1]=grading
-    #print('Image name:',img_name)
-    #print('Corresponding annotated row:',corresponding_row.iloc[0,:3])
-    #print('Grading:',grading)
+
 print('Distribution of the DR grades:')
 print(overviewDf['DR-grade'].value_counts())
-'''
-#Find the files that are annotated, but which are not in our folder
-our_images = os.listdir(image_folder)
-missing_images = []
-for _file in annotated_images:
-    if _file not in our_images:
-        missing_images.append(_file)
-print('Annotated images which are not in our image folder:',len(missing_images))
-'''
+
 #Finally, we can split into train, validation and test sets
 #Grouped by patient ID
 print('Number of unique patient IDs:',overviewDf['Id'].nunique())
@@ -107,12 +95,12 @@ def sort_images():
         new_name = new_name + '.' + ending
         #print(new_name)
         source_path = os.path.join(image_folder,image_name)
-        target_path = os.path.join('Data/MESSIDOR2/SortedMESSIDOR2',str(DR_class),new_name)
+        target_path = os.path.join('../Data/MESSIDOR2/SortedMESSIDOR2',str(DR_class),new_name)
         shutil.copy(source_path, target_path)
 
     #Check the distributions of the sorted folders
     for j in range(5):
-        class_folder = os.path.join('Data/MESSIDOR2/SortedMESSIDOR2',str(j))
+        class_folder = os.path.join('../Data/MESSIDOR2/SortedMESSIDOR2',str(j))
         class_list = os.listdir(class_folder)
         print('Looking at class',j)
         print('Number of observations:',len(class_list))
@@ -179,7 +167,7 @@ def split_trainValTest():
         new_name = new_name + '.' + ending
         #print(new_name)
         source_path = os.path.join(image_folder,image_name)
-        target_path = os.path.join('Data/TrainMESSIDOR',str(DR_class),new_name)
+        target_path = os.path.join('../Data/TrainMESSIDOR',str(DR_class),new_name)
         shutil.copy(source_path, target_path)
 
     #Repeat for the validation and test sets:
@@ -192,7 +180,7 @@ def split_trainValTest():
         new_name = new_name + '_' + eye_side
         new_name = new_name + '.' + ending
         source_path = os.path.join(image_folder,image_name)
-        target_path = os.path.join('Data/ValidMESSIDOR',str(DR_class),new_name)
+        target_path = os.path.join('../Data/ValidMESSIDOR',str(DR_class),new_name)
         shutil.copy(source_path, target_path)
 
     for i in range(testDf.shape[0]):
@@ -204,31 +192,35 @@ def split_trainValTest():
         new_name = new_name + '_' + eye_side
         new_name = new_name + '.' + ending
         source_path = os.path.join(image_folder,image_name)
-        target_path = os.path.join('Data/TestMESSIDOR',str(DR_class),new_name)
+        target_path = os.path.join('../Data/TestMESSIDOR',str(DR_class),new_name)
         shutil.copy(source_path, target_path)
 
-#split_trainValTest()
+#Uncomment below to
+# 1. Sort the raw dataset:
 #sort_images()
+
+# 2. Split into training, validation and test sets (80%, 10%, 10%):
+#split_trainValTest()
 
 #Check how many images in each folder:
 #Start with training folder:
 print('Class distribution in training set:')
 for i in range(5):
-    classFolder = os.path.join('Data/TrainMESSIDOR',str(i))
+    classFolder = os.path.join('../Data/TrainMESSIDOR',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))
 #Then look at validation and test sets...
 print('Class distribution in validation set:')
 for i in range(5):
-    classFolder = os.path.join('Data/ValidMESSIDOR',str(i))
+    classFolder = os.path.join('../Data/ValidMESSIDOR',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))
 
 print('Class distribution in test set:')
 for i in range(5):
-    classFolder = os.path.join('Data/TestMESSIDOR',str(i))
+    classFolder = os.path.join('../Data/TestMESSIDOR',str(i))
     classFiles = os.listdir(classFolder)
     print('Looking at class:',str(i))
     print('Number of images:',len(classFiles))

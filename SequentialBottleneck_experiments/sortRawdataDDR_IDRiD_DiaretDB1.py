@@ -4,7 +4,9 @@ import shutil
 import os
 import random
 
-all_images_path = 'Data/CroppedDataKaggle/CroppedDDR_noAbnormalities'
+#############Code for sorting the DDR, IDRiD and DiaretDB1 datasets (for concept explanations)################
+
+all_images_path = '../Data/CroppedDataKaggle/CroppedDDR_noAbnormalities'
 
 def splitTrainValTest():
     allFiles = os.listdir(all_images_path)
@@ -40,7 +42,7 @@ def splitTrainValTest():
     #Move training files to Train
     for tFile in trainFiles:
         sourceFile = os.path.join(all_images_path,tFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedTrainIDRiD',tFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedTrainIDRiD',tFile)
         shutil.copy(sourceFile,targetPath)
     #Check that no duplicates in validation and test files:
     for vFile in validFiles:
@@ -49,12 +51,12 @@ def splitTrainValTest():
     #Move validation files to Valid
     for vFile in validFiles:
         sourceFile = os.path.join(all_images_path,vFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedValidIDRiD',vFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedValidIDRiD',vFile)
         shutil.copy(sourceFile,targetPath)
     #Move test files to Test
     for testFile in testFiles:
         sourceFile = os.path.join(all_images_path,testFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedTestIDRiD',testFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedTestIDRiD',testFile)
         shutil.copy(sourceFile,targetPath)
 
 def pick1000_splitTrainValTest():
@@ -94,7 +96,7 @@ def pick1000_splitTrainValTest():
     #Move training files to Train
     for tFile in trainFiles:
         sourceFile = os.path.join(all_images_path,tFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedTrainDDR',tFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedTrainDDR',tFile)
         shutil.copy(sourceFile,targetPath)
     #Check that no duplicates in validation and test files:
     for vFile in validFiles:
@@ -103,18 +105,18 @@ def pick1000_splitTrainValTest():
     #Move validation files to Valid
     for vFile in validFiles:
         sourceFile = os.path.join(all_images_path,vFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedValidDDR',vFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedValidDDR',vFile)
         shutil.copy(sourceFile,targetPath)
     #Move test files to Test
     for testFile in testFiles:
         sourceFile = os.path.join(all_images_path,testFile)
-        targetPath = os.path.join('Data/CroppedDataKaggle/CroppedTestDDR',testFile)
+        targetPath = os.path.join('../Data/CroppedDataKaggle/CroppedTestDDR',testFile)
         shutil.copy(sourceFile,targetPath)
 
 def copy_toCombinedFolder():
-    source_folder = 'Data/CroppedDataKaggle/CroppedTestFGADR'
+    source_folder = '../Data/CroppedDataKaggle/CroppedTestFGADR'
     class_folders = os.listdir(source_folder)
-    target_folder = 'Data/CroppedDataKaggle/CroppedTestBottleneckCombined'
+    target_folder = '../Data/CroppedDataKaggle/CroppedTestBottleneckCombined'
     for _class in class_folders:
         for _file in os.listdir(os.path.join(source_folder,_class)):
             file_path = os.path.join(source_folder,_class,_file)
@@ -125,10 +127,10 @@ def copy_toCombinedFolder():
 #splitTrainValTest()
 #pick1000_splitTrainValTest()
 #copy_toCombinedFolder()
-print('Total number of test images FGADR:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestFGADR/0'))+len(os.listdir('Data/CroppedDataKaggle/CroppedTestFGADR/1'))+len(os.listdir('Data/CroppedDataKaggle/CroppedTestFGADR/2'))+len(os.listdir('Data/CroppedDataKaggle/CroppedTestFGADR/3'))+len(os.listdir('Data/CroppedDataKaggle/CroppedTestFGADR/4')))
-print('Total number of test images DDR:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestDDR')))
-print('Total number of test images IDRiD:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestIDRiD')))
-print('Total number of test images DiaretDB1:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestDiaretDB1')))
+print('Total number of test images FGADR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/0'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/1'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/2'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/3'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/4')))
+print('Total number of test images DDR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestDDR')))
+print('Total number of test images IDRiD:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestIDRiD')))
+print('Total number of test images DiaretDB1:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestDiaretDB1')))
 
 #print('Total number of valid images DDR:',len(os.listdir('Data/CroppedDataKaggle/CroppedValidDDR')))
 #print('Total number of test images DDR:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestDDR')))

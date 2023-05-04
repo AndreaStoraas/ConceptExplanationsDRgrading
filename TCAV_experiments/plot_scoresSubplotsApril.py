@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+
+#Plotting the bar plots with mean and std TCAV scores for each concept and each DR level (Top row of Figure 2 in paper)
+#NB! These values should be manually saved when running TCAV_experimenting.py
+
 #Create a dict with the concept and a list of 
 #TCAV mean + std, and whether the concept was significant or not
 #If not significant, the values are just set to 0
-'''
 #On the full images:
 results_class0 = {
     'MA': [0.39, 0.319, True],
@@ -48,51 +51,6 @@ results_class4 = {
     'SE': [0, 0, False],
     'IRMA':[0, 0, False],
     'NV': [0.999, 0.004, True]
-}
-'''
-#On masked images:
-results_class0 = {
-    'MA': [0, 0, False],
-    'HE': [0, 0, False],
-    'EX': [0.401, 0.283, True],
-    'SE': [0.38, 0.277, True],
-    'IRMA':[0.7, 0.278, True],
-    'NV': [0.2, 0.226, True]
-}
-
-results_class1 = {
-    'MA': [0.602, 0.239, True],
-    'HE': [0.598, 0.264, True],
-    'EX': [0.263, 0.197, True],
-    'SE': [0, 0, False],
-    'IRMA':[0.697, 0.198, True],
-    'NV': [0.255, 0.234, True]
-}
-results_class2 = {
-    'MA': [0.722, 0.291, True],
-    'HE': [0, 0, False],
-    'EX': [0.292, 0.309, True],
-    'SE': [0.845, 0.258, True],
-    'IRMA':[0.912, 0.198, True],
-    'NV': [0.113, 0.142, True]
-}
-
-results_class3 = {
-    'MA': [0, 0, False],
-    'HE': [0.887, 0.095, True],
-    'EX': [0.923, 0.085, True],
-    'SE': [0.894, 0.163, True],
-    'IRMA':[0.715, 0.273, True],
-    'NV': [0.016, 0.033, True]
-}
-
-results_class4 = {
-    'MA': [0.361, 0.322, True],
-    'HE': [0.777, 0.259, True],
-    'EX': [0.79, 0.244, True],
-    'SE': [0, 0, False],
-    'IRMA':[0.36, 0.277, True],
-    'NV': [1.0, 0.0, True]
 }
 
 num_concepts = 6
@@ -190,10 +148,7 @@ for j in TCAV_significance4:
 #https://matplotlib.org/3.1.0/gallery/subplots_axes_and_figures/subplots_demo.html#sphx-glr-gallery-subplots-axes-and-figures-subplots-demo-py
 ax[0].bar(bar_x1, TCAV_means1, bar_width, yerr=TCAV_std1, label=plot_concepts1, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[0].set_title('DR level 1',fontsize=32)
-#ax[0,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[0].set_xticks(bar_x1)
 ax[0].set_xticklabels(plot_concepts1, rotation = 75,fontsize=32)
 ax[0].set_ylim((0,1.13))
@@ -203,10 +158,7 @@ for i in range(6):
 #DR level 2:
 ax[1].bar(bar_x2, TCAV_means2, bar_width, yerr=TCAV_std2, label=plot_concepts2, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[1].set_title('DR level 2',fontsize=32)
-#ax[0,1].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[1].set_xticks(bar_x2)
 ax[1].set_xticklabels(plot_concepts1, rotation = 75,fontsize=32)
 ax[1].set_ylim((0,1.13))
@@ -216,10 +168,7 @@ for i in range(6):
 #DR level 3
 ax[2].bar(bar_x3, TCAV_means3, bar_width, yerr=TCAV_std3, label=plot_concepts3, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[2].set_title('DR level 3',fontsize=32)
-#ax[1,1].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[2].set_xticks(bar_x3)
 ax[2].set_xticklabels(plot_concepts3, rotation = 75,fontsize=32)
 ax[2].set_ylim((0,1.13))
@@ -229,19 +178,14 @@ for i in range(6):
 #DR level 4
 ax[3].bar(bar_x4, TCAV_means4, bar_width, yerr=TCAV_std4, label=plot_concepts4, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[3].set_title('DR level 4',fontsize=32)
-#ax[1,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
+
 ax[3].set_xticks(bar_x4)
 ax[3].set_xticklabels(plot_concepts4, rotation = 75,fontsize=32)
 ax[3].set_ylim((0,1.13))
 for i in range(6):
     ax[3].text(bar_x4[i]-0.03,0.01,text_sequence4[i],fontdict = {'weight': 'bold', 'size': 32})
 
-
-#ax[1,0].set(ylabel='TCAV Score')
-#ax[0].set(ylabel='TCAV Score',fontsize=20)
 ax[0].set_ylabel('TCAV Score',fontsize=32)
 ax[0].set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0],fontsize=32)
 # Hide x labels and tick labels for top plots and y ticks for right plots.
@@ -249,8 +193,6 @@ ax[1].label_outer()
 ax[2].label_outer()
 ax[3].label_outer()
 
-#fig.tight_layout()
-#plt.show()
 #Shrink the space between the subplots:
 plt.subplots_adjust(wspace=0.1)
-plt.savefig('PlotTCAVscores_45_test20_subplotsMaskedAprilLong.png', bbox_inches = 'tight')
+plt.savefig('PlotTCAVscores_45_test20_subplots.png', bbox_inches = 'tight')
