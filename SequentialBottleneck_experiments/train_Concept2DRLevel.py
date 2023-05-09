@@ -42,7 +42,7 @@ class Dataset(BaseDataset):
     
     Args:
         filepaths (list): list of paths to images folder
-        concept_df (DataFrame): DF with image name, 6 concept annotations and DR level
+        concept_df (DataFrame): DF with image name, concept predictions and DR level
     """
     
     def __init__(

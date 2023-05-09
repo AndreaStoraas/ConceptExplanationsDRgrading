@@ -26,29 +26,24 @@ from torch.utils.data import Dataset as BaseDataset
 from models import ModelXtoC,ModelXtoChat_ChatToY,ModelOracleCtoY
 from analysis import accuracy, AverageMeter
 
+#####################
+# This code enables to do Test time intervention (TTI) for one image at a time
+# and can be used for qualitative testing of TTI
+#####################
 
 #Device:
-# Should us ID = 0 (Vajira will use ID = 1)
 torch.cuda.set_device(0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print('Device:',DEVICE)
 
 #Define dataset class:
 class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
     
     Args:
-        images_dir (str): path to images folder
-        masks_dir (str): path to segmentation masks folder
-        class_values (list): values of classes to extract from segmentation mask
-        augmentation (albumentations.Compose): data transfromation pipeline 
-            (e.g. flip, scale, etc.)
-        preprocessing (albumentations.Compose): data preprocessing 
-            (e.g. noralization, shape manipulation, etc.)
+        filepaths (list): list of paths to images folder
+        concept_df (DataFrame): DF with image name, 6 concept annotations and DR level
+        intervention_concept_list (list): list of names of the concepts to correct
     """
-    
-    #CLASSES = ['0','1','2','3','4']
-    
     def __init__(
             self, 
             filepaths, 
@@ -62,7 +57,6 @@ class Dataset(BaseDataset):
     def __getitem__(self, i):
         # read data
         image_path = self.filepaths[i]
-        #image_name = os.path.normpath(image_path).split(os.sep)[-1]
         df_row = self.concept_df.loc[self.concept_df['Image_path']==image_path]
         print('Current row:',df_row)
         #Get the raw predicted concept
@@ -71,7 +65,6 @@ class Dataset(BaseDataset):
         #We need to convert them to a proper list of float-values:
         concept_data = concept_data.strip('"')
         concept_data = concept_data.strip('[]')
-        #print('Concept data:',concept_data)
         concept_data = list(concept_data.split(','))
         concept_data = list(map(float,concept_data))
         #For concept intervention, need to replace the predicted concept with 95th/5th percentile from training set:
@@ -85,12 +78,9 @@ class Dataset(BaseDataset):
         true_concepts = true_concepts.strip('[]')
         true_concepts = list(true_concepts.split(','))
         true_concepts = list(map(int,true_concepts))
-        #print('True concepts converted to integer:',true_concepts)
-        #print('Concept data before intervention:',concept_data)
         #Replace predicted concept value with percentile from training set predictions
         if 'MA' in self.intervention_concept_list:
             concept_presence = true_concepts[0]
-            print('Is the concept present?',concept_presence)
             #If the concept is present, pick the 99th percentile value
             if concept_presence == 1:
                 concept_data[0] = MA_percentile99
@@ -126,18 +116,12 @@ class Dataset(BaseDataset):
                 concept_data[5]=IRMA_percentile99
             else:
                 concept_data[5]=IRMA_percentile1
-        #else:
-        #    print('No concept intervention...')
-        #print('Concept data:',concept_data)
         label = df_row.iloc[0,-1]
-        #print('Raw concepts:',concept_data)
         return concept_data, label
         
     def __len__(self):
         #When only looking at the wrongly predicted files:
         return len(self.filepaths)
-        #return self.concept_df.shape[0]
-
 
 def test_model(model, dataloader):
     all_predicted = []
@@ -150,12 +134,8 @@ def test_model(model, dataloader):
             param.requires_grad = False
         for i, (inputs, y_true) in enumerate(dataloader):
             if isinstance(inputs, list):
-                #inputs = [i.long() for i in inputs]
                 inputs = torch.stack(inputs).t().float()
-            #print('The inputs:',inputs)
             inputs = torch.tensor(np.asarray(inputs))
-            #inputs = torch.stack(list(inputs), dim=0)
-            #print('Inputs as tensor:',inputs)
             inputs = torch.flatten(inputs, start_dim=1).float()
             inputs_var = torch.autograd.Variable(inputs).cuda()
             inputs_var = inputs_var.to(DEVICE)
@@ -167,7 +147,6 @@ def test_model(model, dataloader):
             running_acc += acc[0].data.cpu().numpy()
             #Predict the most probable class:
             y_pred = np.argmax(outputs.detach().cpu().numpy(), axis=1)
-            print('Predicted class after concept intervention:',y_pred)
             all_predicted.append(y_pred)
             all_true.append(y_true)
     mean_acc = running_acc / len(dataloader)
@@ -175,8 +154,6 @@ def test_model(model, dataloader):
     #Flatten the list
     all_predicted = [a.squeeze() for a in all_predicted]
     all_true = [a.squeeze() for a in all_true]
-    #print('Predicted values:')
-    #print(all_predicted)
     return all_predicted, all_true
 
 #Want the percentiles for predicted concepts from the FGADR training dataset
@@ -186,7 +163,6 @@ def test_model(model, dataloader):
 #DR classification part of the model
 
 predicted_trainConcepts = pd.read_csv('../SequentialModelOutput/rawDensenet121_conceptPredictions_train.csv',index_col='Unnamed: 0')
-#print(predicted_trainConcepts.head())
 #The order of the concepts are: MA, hemorrhages, soft exudates, hard exudates, NV and IRMA
 #Get the predicted concepts
 MA_predictions = []
@@ -203,8 +179,6 @@ for i in range(predicted_trainConcepts.shape[0]):
     concept_data = concept_data.strip('[]')
     concept_data = list(concept_data.split(','))
     concept_data = list(map(float,concept_data))
-    #print('All predicted concepts:',concept_data)
-    #print('Predicted MA:',concept_data[0])
     MA_predictions.append(concept_data[0])
     hemorrhages_predictions.append(concept_data[1])
     softEx_preditions.append(concept_data[2])
@@ -247,7 +221,7 @@ print('IRMA 99th percentile:',IRMA_percentile99)
 #Get the filenames for the test data:
 n_classes = 5
 n_concepts = 6
-test_folder = '../../../Data/CroppedDataKaggle/CroppedTestFGADR'
+test_folder = '../../Data/CroppedDataKaggle/CroppedTestFGADR'
 #Pick one image we want to correct the wrong concepts for:
 selected_image = [os.path.join('../../Data/CroppedDataKaggle/CroppedTestFGADR','4','0176_3.png')]
 print('Selected image:',selected_image)
@@ -256,24 +230,18 @@ print('Selected image:',selected_image)
 conceptPredictions_test = pd.read_csv('../SequentialModelOutput/rawDensenet121_conceptPredictions_test.csv',index_col = 'Unnamed: 0')
 
 #Create the dataset:
-#test_dataset = Dataset(filepaths = test_filepath,concept_df = conceptPredictions_test, intervention_concept='IRMA')
-#Only intervene and predict on the wrong cases. NB! Also changed the length of Dataset class!!!
 #The concepts to correct for are passed as a list
 #Only correct for the wrong concepts!
 test_dataset = Dataset(filepaths = selected_image,concept_df = conceptPredictions_test, 
     intervention_concept_list=['NV'])
-
-print('Shape of the concept DF:',conceptPredictions_test.shape)
 #Create the dataloader:
-#NB! Want to use weighted random sampler to take DR class imbalance into account
-#This is not implemented in the calculation of the loss for this model
 test_loader = DataLoader(test_dataset, batch_size=1, num_workers=4, shuffle = False)
 
 #Get the model:
 model = ModelXtoChat_ChatToY(n_class_attr=2, n_attributes=n_concepts,
                                  num_classes=n_classes, expand_dim=0)
 print('Loading in the weights for the trained model...')
-chkpoint_path = '../../../output/BottleneckDensenet121_SequentialModel_part2.pt'
+chkpoint_path = '../../output/BottleneckDensenet121_SequentialModel_part2.pt'
 chkpoint = torch.load(chkpoint_path, map_location = 'cpu')
 model.load_state_dict(chkpoint)
 model.to(DEVICE)
@@ -284,8 +252,6 @@ if __name__ == "__main__":
     #Again, flatten the list
     predictions = [item.tolist() for item in predictions]
     y_true = [item.tolist() for item in y_true]
-    #print('All predicted values:')
-    #print(predictions)
     print('Number of predictions:',len(predictions))
     print('True label',y_true)
     print('Predicted label after correction:',predictions)

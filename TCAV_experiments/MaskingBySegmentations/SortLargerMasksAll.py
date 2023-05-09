@@ -15,17 +15,7 @@ IDRiD_folder = 'LargerMaskedConceptIDRiD'
 DiaretDB1_folder = 'LargerMaskedConceptDiaretDB1'
 #List all folders in the directory
 common_combos = os.listdir(common_folder)
-'''
-print('All folders from FGADR:')
-print(common_combos)
-#Then list the corresponding folders for DDR, IDRiD and DiaretDB1:
-print('Folders from DDR:')
-print(os.listdir(DDR_folder))
-print('Folders from IDRiD:')
-print(os.listdir(IDRiD_folder))
-print('Folders from DiaretDB1:')
-print(os.listdir(DiaretDB1_folder))
-'''
+
 #Check that all folders for DDR, IDRiD and DiaretDB1 are in the common folders:
 for _folder in os.listdir(DDR_folder):
     if _folder not in common_combos:
@@ -73,15 +63,12 @@ def moveFolderImages():
             #Copy to the common folder:
             shutil.copy(source_path, target_path)
 
+#Uncomment code below to move concept images from each separate dataset to common concept folders
+# which are originally a copy of the FGADR concept folders (since these folders includes all concept combinations):
 #moveFolderImages()
 
 #Check that the number of images in original folders and new folder sums up (in case images with same name etc)
 for _folder in common_combos:
-    #if 'irma' not in _folder:
-        #print('IRMA not in folder:',_folder)
-        #print('Number of images:', len(os.listdir(os.path.join(common_folder, _folder))))
-    #if 'irma' in str(_folder)[-4:]:
-    #    print('MA in folder:',_folder)
     print('Looking at folder:',_folder)
     print('Number of images in "all" folder:',len(os.listdir(os.path.join(common_folder,_folder))))
     print('Number of images in FGADR:',len(os.listdir(os.path.join('LargerMaskedConceptFGADR',_folder))))

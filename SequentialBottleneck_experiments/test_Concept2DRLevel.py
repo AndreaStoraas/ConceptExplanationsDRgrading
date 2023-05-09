@@ -29,59 +29,44 @@ from torch.utils.data import Dataset as BaseDataset
 from models import ModelXtoC,ModelXtoChat_ChatToY,ModelOracleCtoY
 from analysis import accuracy, AverageMeter
 
+###############
+# This code evaluates the DR level classifier
+###############
 
-
-#Device:
-# Should us ID = 0 (Vajira will use ID = 1)
+# #Device:
 torch.cuda.set_device(0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print('Device:',DEVICE)
 
 #Define dataset class:
 class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
     
     Args:
-        images_dir (str): path to images folder
-        masks_dir (str): path to segmentation masks folder
-        class_values (list): values of classes to extract from segmentation mask
-        augmentation (albumentations.Compose): data transfromation pipeline 
-            (e.g. flip, scale, etc.)
-        preprocessing (albumentations.Compose): data preprocessing 
-            (e.g. noralization, shape manipulation, etc.)
+        filepaths (list): list of paths to images folder
+        concept_df (DataFrame): DF with image name, concept predictions and DR level
     """
-    
-    #CLASSES = ['0','1','2','3','4']
     
     def __init__(
             self, 
             filepaths, 
             concept_df, #Order of the concepts in the df are: MA, HE, SoftEx, HardEx, NV, IRMA
-            #augmentation=None, 
-            #preprocessing=None,
     ):
         self.filepaths = filepaths
         self.concept_df = concept_df
-        #self.augmentation = augmentation
 
     def __getitem__(self, i):
         # read data
         image_path = self.filepaths[i]
-        #image_name = os.path.normpath(image_path).split(os.sep)[-1]
         df_row = self.concept_df.loc[self.concept_df['Image_path']==image_path]
-        #print('Current row:',df_row)
         #Get the raw predicted concept
         concept_data = df_row.iloc[0,1]
         #Since these are (of unknown causes) interpreted as a string-list
         #We need to convert them to a proper list of float-values:
         concept_data = concept_data.strip('"')
         concept_data = concept_data.strip('[]')
-        #print('Concept data:',concept_data)
         concept_data = list(concept_data.split(','))
         concept_data = list(map(float,concept_data))
-        #print('Concept data:',concept_data)
         label = df_row.iloc[0,-1]
-        #print('Raw concepts:',concept_data)
         return concept_data, label
         
     def __len__(self):
@@ -100,12 +85,8 @@ def test_model(model, dataloader):
             param.requires_grad = False
         for i, (inputs, y_true) in enumerate(dataloader):
             if isinstance(inputs, list):
-                #inputs = [i.long() for i in inputs]
                 inputs = torch.stack(inputs).t().float()
-            #print('The inputs:',inputs)
             inputs = torch.tensor(np.asarray(inputs))
-            #inputs = torch.stack(list(inputs), dim=0)
-            #print('Inputs as tensor:',inputs)
             inputs = torch.flatten(inputs, start_dim=1).float()
             inputs_var = torch.autograd.Variable(inputs).cuda()
             inputs_var = inputs_var.to(DEVICE)
@@ -131,9 +112,9 @@ def test_model(model, dataloader):
 #Get the filenames for the test data:
 n_classes = 5
 n_concepts = 6
-test_folder = '../../Data/CroppedDataKaggle/CroppedTestFGADR'
+test_folder = '../Data/CroppedDataKaggle/CroppedTestFGADR'
 #Test on entire Combined XL test set:
-#test_folder = '../../Data/CroppedDataKaggle/CroppedTestCombinedXL'
+#test_folder = '../Data/CroppedDataKaggle/CroppedTestCombinedXL'
 
 small_list = [os.path.join(test_folder, str(class_id)) for class_id in range(n_classes)]
 print('Small list testing:', small_list)
@@ -158,15 +139,13 @@ conceptPredictions_test = pd.read_csv('SequentialModelOutput/rawDensenet121_conc
 test_dataset = Dataset(filepaths = test_filepath,concept_df = conceptPredictions_test)
 print('Shape of the concept DF:',conceptPredictions_test.shape)
 #Create the dataloader:
-#NB! Want to use weighted random sampler to take DR class imbalance into account
-#This is not implemented in the calculation of the loss for this model
 test_loader = DataLoader(test_dataset, batch_size=1, num_workers=4, shuffle = False)
 
-#Get the model:
+#Get the DR classification model:
 model = ModelXtoChat_ChatToY(n_class_attr=2, n_attributes=n_concepts,
                                  num_classes=n_classes, expand_dim=0)
 print('Loading in the weights for the trained model...')
-chkpoint_path = '../../output/BottleneckDensenet121_SequentialModel_part2.pt'
+chkpoint_path = '../output/BottleneckDensenet121_SequentialModel_part2.pt'
 chkpoint = torch.load(chkpoint_path, map_location = 'cpu')
 model.load_state_dict(chkpoint)
 model.to(DEVICE)
@@ -176,8 +155,6 @@ if __name__ == "__main__":
     #Again, flatten the list
     predictions = [item.tolist() for item in predictions]
     y_true = [item.tolist() for item in y_true]
-    #print('All predicted values:')
-    #print(predictions)
     print('Number of predictions:',len(predictions))
     #Calculating performance metrics (macro = unweighted mean across all samples):
     precision, recall, fscore, support = metrics.precision_recall_fscore_support(y_true,predictions, average='macro')
@@ -196,7 +173,6 @@ if __name__ == "__main__":
     print('Recall separate:',recall)
     print('F1 score separate:',fscore)
     print('Support separate:',support)
-    #Try to plot all predictions in one single confusion matrix:
+    #Plot all predictions in one single confusion matrix:
     print(metrics.confusion_matrix(y_true, predictions))
-    #print(metrics.multilabel_confusion_matrix(y_true, predictions))
     print(metrics.classification_report(y_true, predictions))

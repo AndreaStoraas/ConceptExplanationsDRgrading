@@ -3,10 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-#Load in the raw concept df predictions on the representative test set (for comparison with TCAV scores):
-#conceptPredictions_test = pd.read_csv('./SequentialModelOutput/MayRawDensenet121_conceptPredictions_RepresentativeTestset.csv',index_col = 'Unnamed: 0')
+#The code use to create the lower row of Figure 2
+#Plot the concept predictions for the FGADR testset for each DR level.
+
 #Inspect the FGADR test set instead:
-conceptPredictions_test = pd.read_csv('./SequentialModelOutput/MayRawDensenet121_conceptPredictions_FGADRTestset.csv',index_col = 'Unnamed: 0')
+conceptPredictions_test = pd.read_csv('./SequentialModelOutput/RawDensenet121_conceptPredictions_FGADRTestset.csv',index_col = 'Unnamed: 0')
 
 #Counting number of positive predictions for MA
 MA_level0_predictions = 0
@@ -212,10 +213,7 @@ fig, ax = plt.subplots(1,4, figsize=(32,8))
 #DR level 1
 ax[0].bar(bar_x, level_1_conceptCounts, bar_width, label=plot_conceptNames, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[0].set_title('DR level 1',fontsize=32)
-#ax[0,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[0].set_xticks(bar_x)
 ax[0].set_xticklabels(plot_conceptNames, rotation = 75,fontsize=32)
 ax[0].set_ylim((0,1.05))
@@ -223,10 +221,7 @@ ax[0].set_ylim((0,1.05))
 #DR level 2
 ax[1].bar(bar_x, level_2_conceptCounts, bar_width, label=plot_conceptNames, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[1].set_title('DR level 2',fontsize=32)
-#ax[0,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[1].set_xticks(bar_x)
 ax[1].set_xticklabels(plot_conceptNames, rotation = 75,fontsize=32)
 ax[1].set_ylim((0,1.05))
@@ -234,10 +229,7 @@ ax[1].set_ylim((0,1.05))
 #DR level 3
 ax[2].bar(bar_x, level_3_conceptCounts, bar_width, label=plot_conceptNames, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[2].set_title('DR level 3',fontsize=32)
-#ax[0,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[2].set_xticks(bar_x)
 ax[2].set_xticklabels(plot_conceptNames, rotation = 75,fontsize=32)
 ax[2].set_ylim((0,1.05))
@@ -245,10 +237,7 @@ ax[2].set_ylim((0,1.05))
 #DR level 4
 ax[3].bar(bar_x, level_4_conceptCounts, bar_width, label=plot_conceptNames, 
     color=['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown'])
-    #color=['blue','orange','green','red','brown','purple'])
 ax[3].set_title('DR level 4',fontsize=32)
-#ax[0,0].set_ylabel('TCAV Score')
-#ax.set_xticks(index * bar_width / 2)
 ax[3].set_xticks(bar_x)
 ax[3].set_xticklabels(plot_conceptNames, rotation = 75,fontsize=32)
 ax[3].set_ylim((0,1.05))
@@ -260,8 +249,7 @@ ax[1].label_outer()
 ax[2].label_outer()
 ax[3].label_outer()
 
-#fig.tight_layout()
-#plt.show()
+
 #Shrink the space between the subplots:
 plt.subplots_adjust(wspace=0.1)
-plt.savefig('PlotBottleneckConceptCounts_FGADRTestset_subplotsMayLong.png', bbox_inches = 'tight')
+plt.savefig('PlotBottleneckConceptCounts_FGADRTestset_subplots.png', bbox_inches = 'tight')

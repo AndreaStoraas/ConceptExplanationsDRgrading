@@ -4,6 +4,14 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 
+########################
+# This code finds the original concept image and matches it with the corresponding masked image
+# To ensure that the exact same concept images are included in the TCAV experiments with and without masking
+# (i.e., the only difference is the masking itself) 
+# The masked images are copied over to their respective concept folders
+########################
+
+
 masked_conceptCombinations = 'LargerMaskedConceptAll'
 masked_conceptFolders = os.listdir(masked_conceptCombinations)
 #MA:
@@ -168,6 +176,9 @@ def moveNV_masks2concepts():
         print('Number of images in original NV concept folder:', len(folder_images))
         print('Number of images in corresponding masked NV concept folder:',len(os.listdir(os.path.join(target_maskedConcepts_NV,NV_folder))))
 
+
+#Uncomment the lines below to move the masked concept images
+# over to their resepctive concept folders in the same pattern as for the full concept images
 #moveMA_masks2concepts()
 #moveHE_masks2concepts()
 #moveHardEx_masks2concepts()

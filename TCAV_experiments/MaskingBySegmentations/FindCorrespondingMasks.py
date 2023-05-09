@@ -6,6 +6,12 @@ import numpy as np
 import pandas as pd
 import random
 
+##########################
+# This code masks out the findings of interest for each of the datasets (FGADR, IDRiD, DDR and DiaretDB1)
+# The naming of the segmentation masks and original images varies between the datasets,
+# So different lines should be commented out based on which datasets that are being masked
+##########################
+
 #FGADR:
 FGADR_conceptsPath = '../ConceptFoldersFGADR/SortedByCombinations'
 FGADR_segmentationsPath = '../../Data/FGADR-Seg-set'
@@ -37,38 +43,6 @@ largest_xaDist = 0
 smallest_ybDist = 700
 smallest_xaDist = 700
 
-
-'''
-#Check size of the cropped concept images...
-All_croppedFolder = 'LargerMaskedConceptAll'
-All_croppedCombinations = os.listdir(All_croppedFolder)
-#Double check smallest and largest image for each combination of concepts
-#For each concept combination:
-for combo in All_croppedCombinations:
-    print('Looking at combination:',combo)
-    #Get the images for that specific concept combination
-    combo_images = os.listdir(os.path.join(All_croppedFolder,combo))
-    #Get the segmentation mask for each concept
-    for _img in combo_images:
-        #Get the original image:
-        image_path = os.path.join(All_croppedFolder,combo,_img)
-        my_image = cv.imread(image_path)
-        height, widht, _ = my_image.shape
-        if widht > largest_xaDist:
-            largest_xaDist = widht
-        if widht < smallest_xaDist:
-            smallest_xaDist = widht
-        if height > largest_ybDist:
-            largest_ybDist = height
-        if height < smallest_ybDist:
-            smallest_ybDist = height
-print('Tallest image:',largest_ybDist)
-print('Lowest image:',smallest_ybDist)
-print('Widest image:',largest_xaDist)
-print('Smalest image:',smallest_xaDist)
-
-'''
-
 #For each concept combination:
 for combo in FGADR_combinationFolders:
     print('Looking at combination:',combo)
@@ -82,7 +56,6 @@ for combo in FGADR_combinationFolders:
         #Get the original image:
         image_path = os.path.join(FGADR_conceptsPath,combo,_img)
         my_image = cv.imread(image_path)
-        #my_image = cv.cvtColor(my_image, cv.COLOR_BGR2RGB)
         #mask_name = _img[:-3]+'tif' #Only for DDR dataset
         #Collect the masks for all concepts in a list:
         mask_lists = []

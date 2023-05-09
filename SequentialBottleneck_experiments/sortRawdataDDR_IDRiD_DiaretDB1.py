@@ -4,9 +4,9 @@ import shutil
 import os
 import random
 
-#############Code for sorting the DDR, IDRiD and DiaretDB1 datasets (for concept explanations)################
-
-all_images_path = '../Data/CroppedDataKaggle/CroppedDDR_noAbnormalities'
+#############Code for sorting the DDR, IDRiD and DiaretDB1 datasets into train, validation and test (for concept explanations)################
+#Path to the dataset you want to split
+all_images_path = '../Data/CroppedDataKaggle/CroppedIDRiD'
 
 def splitTrainValTest():
     allFiles = os.listdir(all_images_path)
@@ -124,13 +124,11 @@ def copy_toCombinedFolder():
     #print('Number of files in source folder:',len(os.listdir(source_folder)))
     print('Number of files in target folder:',len(os.listdir(target_folder)))
 
-#splitTrainValTest()
-#pick1000_splitTrainValTest()
-#copy_toCombinedFolder()
-print('Total number of test images FGADR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/0'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/1'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/2'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/3'))+len(os.listdir('../Data/CroppedDataKaggle/CroppedTestFGADR/4')))
-print('Total number of test images DDR:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestDDR')))
-print('Total number of test images IDRiD:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestIDRiD')))
-print('Total number of test images DiaretDB1:',len(os.listdir('../Data/CroppedDataKaggle/CroppedTestDiaretDB1')))
 
-#print('Total number of valid images DDR:',len(os.listdir('Data/CroppedDataKaggle/CroppedValidDDR')))
-#print('Total number of test images DDR:',len(os.listdir('Data/CroppedDataKaggle/CroppedTestDDR')))
+#Uncomment lines below to
+# 1. Split the dataset into train, validation and test (must repeat for DDR, IDRiD and DiaretDB1)
+#splitTrainValTest()
+# 2. Pick 1000 level 0 images (no concepts present) from the DDR dataset
+#pick1000_splitTrainValTest()
+# 3. After splitting each dataset, move the images to the combined train, validation and test folders
+#copy_toCombinedFolder()
