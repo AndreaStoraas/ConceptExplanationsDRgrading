@@ -26,34 +26,29 @@ from models import ModelXtoC,ModelXtoChat_ChatToY,ModelOracleCtoY
 from analysis import binary_accuracy, AverageMeter
 from template_model import FC
 
+#This code extracts the predicted concepts from the bottleneck models after training
+#The predicted concepts are then used to train the final DR level classifier
+
 #Device:
-# Should us ID = 0 (Vajira will use ID = 1)
-torch.cuda.set_device(0)
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print('Device:',DEVICE)
+torch.cuda.set_device(1)
+DEVICE = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 #Define dataset class:
 class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
     
     Args:
-        images_dir (str): path to images folder
-        masks_dir (str): path to segmentation masks folder
-        class_values (list): values of classes to extract from segmentation mask
+        filepaths (list): list of paths to images folder
+        concept_df (DataFrame): DF with image name, 6 (4) concept annotations and DR level
         augmentation (albumentations.Compose): data transfromation pipeline 
             (e.g. flip, scale, etc.)
-        preprocessing (albumentations.Compose): data preprocessing 
-            (e.g. noralization, shape manipulation, etc.)
     """
-    
-    #CLASSES = ['0','1','2','3','4']
     
     def __init__(
             self, 
             filepaths, 
             concept_df, #Order of the concepts in the df are: MA, HE, SoftEx, HardEx, NV, IRMA
             augmentation=None, 
-            #preprocessing=None,
     ):
         self.filepaths = filepaths
         self.concept_df = concept_df
@@ -64,8 +59,6 @@ class Dataset(BaseDataset):
         image_path = self.filepaths[i]
         image = cv.imread(image_path)
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        #print('Checking the class:')
-        #print(os.path.normpath(image_path).split(os.sep)[-2])
         #Check the class:
         if os.path.normpath(image_path).split(os.sep)[-2]=='0':
             label = 0
@@ -87,8 +80,6 @@ class Dataset(BaseDataset):
         # get the corresponding presence/absence of concepts
         df_row = self.concept_df.loc[self.concept_df['image_name']==image_name]
         concept_annotations = df_row.iloc[0,1:7].values.tolist()
-        #print('Correct row:',df_row)
-        #print('Concept annotations:',concept_annotations)
         return image, label, concept_annotations
         
     def __len__(self):
@@ -106,10 +97,7 @@ def get_conceptPredictions(model, dataloader):
         for i, (inputs, y_true, concept_labels) in enumerate(dataloader):
             inputs_var = torch.autograd.Variable(inputs)
             inputs_var = inputs_var.to(DEVICE)
-            #inputs = inputs.to(DEVICE)
-            #y_true = y_true.to(DEVICE)
             y_pred = model(inputs_var)
-            #print('Y_pred without sigmoid:',y_pred)
             concept_outputs = torch.cat([o.unsqueeze(1) for o in y_pred], dim=1).squeeze()
             all_predicted.append(concept_outputs.data.cpu().numpy())
             all_true.append(y_true.numpy())
@@ -118,9 +106,6 @@ def get_conceptPredictions(model, dataloader):
     #Flatten the list
     all_predicted = [a.squeeze() for a in all_predicted]
     all_true = [a.squeeze() for a in all_true]
-    #all_concepts = [a.squeeze() for a in all_concepts]
-    #print('Predicted values:')
-    #print(all_predicted)
     return all_predicted, all_true, all_concepts
 
 
@@ -147,7 +132,7 @@ transform_train_clahe = albu.Compose([albu.CLAHE(clip_limit=2.0,p=1),
 
 n_concepts = 6
 n_classes = 5
-test_path = '../../Data/CroppedDataKaggle/CroppedTestFGADR'
+test_path = '../Data/CroppedDataKaggle/CroppedTestFGADR'
 #Get concept predictions for full combined XL test set
 #test_path = '../../Data/CroppedDataKaggle/CroppedTestCombinedXL'
 #Add all filepaths for the test dataset to a list
@@ -167,17 +152,13 @@ for _list in small_list:
 print('Length of test files:',len(test_filepath))
 print('First filepath:',test_filepath[0])
 
-overview_conceptDF = pd.read_csv('FGADR_Concept_DR_annotations.csv',index_col = 'Unnamed: 0')
+overview_conceptDF = pd.read_csv('./FGADR_Concept_DR_annotations.csv',index_col = 'Unnamed: 0')
 #For the entire XL combined test set:
-#overview_conceptDF = pd.read_csv('../CroppedTestCombinedXL_overview.csv',index_col = 'Unnamed: 0')
+#overview_conceptDF = pd.read_csv('./CroppedTestCombinedXL_overview.csv',index_col = 'Unnamed: 0')
 test_dataset = Dataset(test_filepath,concept_df = overview_conceptDF,augmentation = transform_test_clahe)
 #For the training set, the training augmentation is applied (according to original implementation)
 #test_dataset = Dataset(test_filepath,concept_df = overview_conceptDF,augmentation = transform_train_clahe)
 test_loader = DataLoader(test_dataset,batch_size=1,shuffle=False,num_workers=4)
-
-#For Inception V3 model:
-#model1 = ModelXtoC(pretrained=True, freeze=False, num_classes=n_classes, use_aux=True,
-#                      n_attributes=n_concepts,  expand_dim=0, three_class=False) #three_class = False since we want binary classifications of each concept
 
 #For the Densenet 121 model:
 #Customized forward function for Densenet:
@@ -202,7 +183,7 @@ for i in range(n_concepts):
     model1.classifier.append(FC(num_in_features, 1, expand_dim=False))
 
 print('Loading in the weights for the trained model...')
-chkpoint_path = '../../output/Bottleneck_SequentialModelDensenet121.pt'
+chkpoint_path = '../output/Bottleneck_SequentialModelDensenet121.pt'
 chkpoint = torch.load(chkpoint_path, map_location = 'cpu')
 model1.load_state_dict(chkpoint)
 #For Densenet: use the customized forward function:
@@ -214,12 +195,7 @@ if __name__ == "__main__":
     #Again, flatten the list
     predictions = [item.tolist() for item in predictions]
     true_DR = [item.tolist() for item in true_DR]
-    #true_concepts = [item.tolist() for item in true_concepts]
-    #print('All predicted values:')
-    #print(predictions)
     print('Number of predictions:',len(predictions))
-    #print('True DR levels:')
-    #print(true_DR)
     print('Number of DR labels:',len(true_DR))
     #Since no shuffling, the order of the images are the same as in the test_filepath:
     my_df = pd.DataFrame(test_filepath)
@@ -228,15 +204,7 @@ if __name__ == "__main__":
     my_df['True_DRLevel'] = true_DR
     #Rename the image path column:
     my_df = my_df.rename(columns = {0:'Image_path'})
-    #print('My dataframe:')
-    print(my_df.iloc[3,1])
-    print(my_df.iloc[3,2])
-    print(torch.nn.Sigmoid()(torch.tensor(my_df.iloc[3,1])))
-    #print(os.path.normpath(my_df.iloc[1,0]).split(os.sep)[-2:])
-    
     #NB! For train set, the full training transformation is applied, while this is NOT the case
     #for validation and test sets...
-    
     print('Saving concept outputs as csv-file!')
-    my_df.to_csv('./SequentialModelOutput/MayRawDensenet121_conceptPredictions_FGADRTestset.csv')
-    ## NOTE: During training, shuffling in the dataloader is applied :)
+    my_df.to_csv('./SequentialModelOutput/RawDensenet121_conceptPredictions_FGADRTestset.csv')
