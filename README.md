@@ -15,12 +15,12 @@ This work applies the following datasets:
 * IDRiD: https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid
 
 ### Guide for Running the Experiments
-1. The datasets should be downloaded in a Data folder in the root directory
+1. The datasets should be downloaded in a folder called Data in the root directory.
 2. Run the code in the DataPreprocessing folder: 
   * First, sort and split the datasets into train, validation and test sets by running the respective Sort...-files. 
   * Second, crop out black areas from the images in the APTOS 2019, Diabetic Retinopathy Detection, FGADR, and Messidor-2 datasets for training the DR classification model for TCAV by running preprocessImages.py for each of the datasets. These cropped datasets should be saved in a CroppedDataKaggle folder in the Data folder. 
   * Finally, you can combine the cropped train, validation and test sets into larger train, validation and test sets by running combinedDatasets.py
-3. For the TCAV experiments, run the code in the TCAV_experiments folder: 
+3. For the **TCAV experiments**, run the code in the TCAV_experiments folder: 
   * Train a deep neural network using the Densenet-121 architecture for the TCAV experiments by running trainWeightedMulticlass.py. The final model should be saved in a folder called outputs in the root directory.
   * Test the resulting model for DR level classification by running testMulticlass.py.
   * Sort the concepts from the four datasets (FGADR, DDR, IDRiD and DiaretDB1) into concept folders by running SortConcepts... files. The sorted concepts are saved in concept folders for each dataset, as well as one concept folder combining the images from all four datasets.
@@ -29,7 +29,7 @@ This work applies the following datasets:
   * Run plot_scoresSubplots.py to plot the TCAV scores for each DR level. 
   * Run count_conceptImages.py to get an overview of the concept distributions in the four concept datasets.
   * For exploring the effect of masking, create the masked concept images by running the code in the MaskingBySegmentations subfolder and then run TCAV_experimenting.py.
-4. For the Sequential Bottleneck Experiments, run the code in the SequentialBottleneck_experiments folder
+4. For the **Sequential Bottleneck experiments**, run the code in the SequentialBottleneck_experiments folder
   * Split the concept datasets (DDR, IDRiD, DiaretDB1) into train, validation and test sets for training the first part of the CBMs by running sortRawdataDDR_IDRiD_DiaretDB1.py.
   * Get overview files of the concepts for FGADR (all six concepts) and DDR, IDRiD, DiaretDB1 and FGADR (four concepts) by running SortConceptsFGADR.py and createOverviewDF_DDR_IDRiD_DiaretDB1.py. 
   * For training the first part of the CBMs, run trainBottleneckDensenet121.py (for all six concepts) and trainCombinedBottleneck.py (for four concepts). The final models should be saved in a folder called outputs in the root directory.
