@@ -1,5 +1,7 @@
 # Looking into Concept Explanation Methods for Diabetic Retinopathy Classification
 
+**Link to the publication:** https://doi.org/10.59275/j.melba.2024-e7fd
+
 This repo includes the source code for training the diabetic retinopathy (DR) classification models and generate explanations using Testing with Concept Activation Vectors (TCAV) [1] and Concept Bottleneck Models (CBMs) [2]. The Captum implementation of TCAV and the original source code for the CBMs were modified for the Densenet-121 architecture. All datasets are publicly available. For access to the datasets, please refer to the respective dataset sources. 
 
 ![My figure](./Figures/PlotCombined_ConceptCounts_TCAVscores_FGADRTestset_subplotsMayLong.png)
